@@ -1,6 +1,6 @@
 # Limit meta-analysis in the browser: validation against the R package metasens
 
-This archive validates the allmeta limit meta-analysis page, source **4a053dd (PR #115)**, with the validation button added in **e431057 (PR #117)**; both commits are in allmeta v1.4.0. It contains the full primary comparison: **55,524 of 55,525 checks pass; 1 documented R non-convergence**. It is not a complete primary-oracle pass or a release certification.
+This archive validates the allmeta limit meta-analysis page, source **4a053dd (PR #115)**, with the validation button added in **e431057 (PR #117)**; both commits are in allmeta v1.4.0 (https://doi.org/10.5281/zenodo.23404527). It contains the full primary comparison: **55,524 of 55,525 checks pass; 1 documented R non-convergence**. It is not a complete primary-oracle pass or a release certification.
 
 ## Reproduce
 

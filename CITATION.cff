@@ -14,7 +14,7 @@ references:
       - family-names: Ahmad
         given-names: Mahmood
     url: https://github.com/mahmood726-cyber/allmeta
-    notes: "isDerivedFrom; validated source commit 4a053dd (corrections, PR #115); Validate panel e431057 (PR #117); allmeta v1.4.0"
+    notes: "isDerivedFrom; validated source commit 4a053dd (corrections, PR #115); Validate panel e431057 (PR #117); allmeta v1.4.0 (https://doi.org/10.5281/zenodo.23404527)"
   - type: software
     title: allmeta
     authors:
