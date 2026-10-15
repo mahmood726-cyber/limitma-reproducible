@@ -1,0 +1,24 @@
+{
+  "coverage": "pass",
+  "source_hashes": "pass",
+  "patch_application": "pass",
+  "patched_ui": "pass",
+  "negative_evidence": [
+    {
+      "case": "missing_configuration",
+      "detected": true
+    },
+    {
+      "case": "duplicate_key",
+      "detected": true
+    },
+    {
+      "case": "null_estimate",
+      "detected": true
+    },
+    {
+      "case": "missing_vector",
+      "detected": true
+    }
+  ]
+}

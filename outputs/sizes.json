@@ -1,0 +1,34 @@
+{
+  "figure2_agreement.png": {
+    "width_pixels": 2007,
+    "height_pixels": 2400,
+    "dpi": [
+      299.9994,
+      299.9994
+    ]
+  },
+  "figure2_agreement.tif": {
+    "width_pixels": 2007,
+    "height_pixels": 2400,
+    "dpi": [
+      300.0,
+      300.0
+    ]
+  },
+  "visual_abstract.png": {
+    "width_pixels": 2007,
+    "height_pixels": 1080,
+    "dpi": [
+      299.9994,
+      299.9994
+    ]
+  },
+  "visual_abstract.tif": {
+    "width_pixels": 2007,
+    "height_pixels": 1080,
+    "dpi": [
+      300.0,
+      300.0
+    ]
+  }
+}

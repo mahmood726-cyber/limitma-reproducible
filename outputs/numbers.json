@@ -1,0 +1,44 @@
+{
+  "configurations": {
+    "value": 169,
+    "source": "data/corpus.json; results/reference-before.json; results/reference.json; results/app.json; results/app-patched.json",
+    "transformation": "strict primary comparison / exact corpus aggregation; historical before uses round-5 curve, after uses round-6 clipped curve",
+    "validation": "expected/paper_values.json and original per-quantity ledgers"
+  },
+  "datasets_used": {
+    "value": 113,
+    "source": "data/corpus.json; results/reference-before.json; results/reference.json; results/app.json; results/app-patched.json",
+    "transformation": "strict primary comparison / exact corpus aggregation; historical before uses round-5 curve, after uses round-6 clipped curve",
+    "validation": "expected/paper_values.json and original per-quantity ledgers"
+  },
+  "effect_rows": {
+    "value": 9852,
+    "source": "data/corpus.json; results/reference-before.json; results/reference.json; results/app.json; results/app-patched.json",
+    "transformation": "strict primary comparison / exact corpus aggregation; historical before uses round-5 curve, after uses round-6 clipped curve",
+    "validation": "expected/paper_values.json and original per-quantity ledgers"
+  },
+  "checks": {
+    "value": 55525,
+    "source": "data/corpus.json; results/reference-before.json; results/reference.json; results/app.json; results/app-patched.json",
+    "transformation": "strict primary comparison / exact corpus aggregation; historical before uses round-5 curve, after uses round-6 clipped curve",
+    "validation": "expected/paper_values.json and original per-quantity ledgers"
+  },
+  "passed": {
+    "value": 55524,
+    "source": "data/corpus.json; results/reference-before.json; results/reference.json; results/app.json; results/app-patched.json",
+    "transformation": "strict primary comparison / exact corpus aggregation; historical before uses round-5 curve, after uses round-6 clipped curve",
+    "validation": "expected/paper_values.json and original per-quantity ledgers"
+  },
+  "before_checks": {
+    "value": 55525,
+    "source": "data/corpus.json; results/reference-before.json; results/reference.json; results/app.json; results/app-patched.json",
+    "transformation": "strict primary comparison / exact corpus aggregation; historical before uses round-5 curve, after uses round-6 clipped curve",
+    "validation": "expected/paper_values.json and original per-quantity ledgers"
+  },
+  "before_passed": {
+    "value": 44772,
+    "source": "data/corpus.json; results/reference-before.json; results/reference.json; results/app.json; results/app-patched.json",
+    "transformation": "strict primary comparison / exact corpus aggregation; historical before uses round-5 curve, after uses round-6 clipped curve",
+    "validation": "expected/paper_values.json and original per-quantity ledgers"
+  }
+}

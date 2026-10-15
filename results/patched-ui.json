@@ -1,0 +1,46 @@
+[
+  {
+    "name": "default fixture k",
+    "actual": 10,
+    "expected": 10,
+    "pass": true
+  },
+  {
+    "name": "SE minimum applies to point coordinates",
+    "actual": true,
+    "expected": true,
+    "pass": true
+  },
+  {
+    "name": "unsupported log axes disabled",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  },
+  {
+    "name": "minimum k refuses exported result",
+    "actual": null,
+    "expected": null,
+    "pass": true,
+    "reason": "At least three valid studies are required."
+  },
+  {
+    "name": "minimum k clears stale table",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  },
+  {
+    "name": "minimum k clears stale plot",
+    "actual": 0,
+    "expected": 0,
+    "pass": true
+  },
+  {
+    "name": "equal SE singularity refuses result",
+    "actual": null,
+    "expected": null,
+    "pass": true,
+    "reason": "Limit meta-analysis requires variation in study SEs."
+  }
+]

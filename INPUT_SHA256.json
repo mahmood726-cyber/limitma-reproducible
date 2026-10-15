@@ -1,0 +1,5 @@
+{
+  "data/corpus.json": "95d46f909e8955f6477aae1f3f7ac5a7873be052ed1f30cba407f722ace8b36a",
+  "results/app-patched.json": "c093633fb122af2923702b97d0329477a0d099afc490ba2a3b79b0e3704e9eda",
+  "expected/documented_differences.json": "8b6fd39ff04b25b31049af6ec45774f1e46fcac16748d87403b589c2f066f301"
+}

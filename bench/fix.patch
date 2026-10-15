@@ -1,0 +1,632 @@
+diff --git a/limit-ma/index.html b/limit-ma/index.html
+index 88cf2fb..10d0e95 100644
+--- a/limit-ma/index.html
++++ b/limit-ma/index.html
+@@ -74,7 +74,7 @@
+ <a id="hub-back" href="../" aria-label="Back to allmeta hub" style="position:fixed;top:12px;left:12px;z-index:99999;padding:6px 12px;background:rgba(28,31,35,0.85);color:#fff;text-decoration:none;border-radius:14px;font:600 12px/1 system-ui,sans-serif;letter-spacing:.04em;box-shadow:0 2px 8px rgba(0,0,0,0.18);transition:opacity .15s ease;opacity:.85" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.85'">&#8592; allmeta</a>
+   <header>
+     <h1>Limit meta-analysis (R&#252;cker)</h1>
+-    <p>Adjusts the pooled effect for small-study effects by extrapolating to the zero-variance limit via a shrunken random-effects model. R&#252;cker et al., Stat Med 2011. R-parity: verified against <code>metasens::limitmeta(metagen(...))</code>.</p>
++    <p>Adjusts the pooled effect for small-study effects by extrapolating to the zero-variance limit via a shrunken random-effects model. R&#252;cker et al., Biostatistics 2011. R-parity: verified against <code>metasens::limitmeta(metagen(...))</code>.</p>
+   </header>
+   <main id="main">
+     <section class="panel">
+@@ -108,14 +108,18 @@
+     </section>
+     <section class="panel">
+       <h2>Pooled vs limit</h2>
++      <div id="limit-error" role="alert"></div>
++      <div id="limit-range-note" aria-live="polite"></div>
+       <table>
+         <thead><tr><th>Method</th><th>Estimate</th><th>SE</th><th>95% CI</th></tr></thead>
+         <tbody id="body"></tbody>
+       </table>
++      <div id="limit-diagnostics" aria-live="polite"></div>
+       <h2 style="margin-top:0.6rem">Funnel + R&#252;cker regression</h2>
+ 
+       <!-- axis-controls mount -->
+       <div id="alm-axis-mount"></div>
++      <p id="limit-log-note">Log axes are not supported for this plot; effect and SE axes are linear.</p>
+ 
+       <svg id="plot" viewBox="0 0 600 340" role="img" aria-label="Funnel plot with R&#252;cker limit extrapolation line"></svg>
+ 
+@@ -124,6 +128,10 @@
+ 
+       <div class="note"><strong>Interpretation:</strong> the limit estimate is the value the random-effects model would return if all studies had zero sampling error. A large gap between the standard random-effects estimate and the limit estimate indicates small-study effects (possibly pub bias).</div>
+ 
++      <p>Export schema <code>limit-ma-results-v2</code>: unavailable diagnostics
++        (<code>Q</code>, <code>Q_small</code>, <code>Q_resid</code>, <code>G_squared</code>)
++        are exported as <code>null</code>, with the reason shown above. In particular, G&#178; is undefined
++        when the shrunken radial regression total sum of squares is zero.</p>
+       <!-- results-export mount -->
+       <div class="actions">
+         <div id="alm-export-mount"></div>
+@@ -209,7 +217,7 @@
+         sst += (y[j] - yb) * (y[j] - yb);
+       }
+       var sigma = Math.sqrt(sse / (k - 2));
+-      var rsq = 1 - sse / sst;
++      var rsq = sst === 0 ? null : 1 - sse / sst;
+       var invSe = se.map(function (s) { return 1 / s; }); // sqrt(1/se^2)
+       var seSlope = 1 / Math.sqrt(_varS(invSe)) / Math.sqrt(k - 1);
+       var seInt = seSlope * _mean(se.map(function (s) { return 1 / (s * s); }));
+@@ -254,19 +262,33 @@
+       var Q = pool(rows, 0).Q;            // FE Cochran Q (= metagen $Q)
+       var Qresid = regF.sigma * regF.sigma * (k - 2);
+       var Qsmall = Q - Qresid;
+-      var Gsquared = 1 - regL.r_squared;
++      var Gsquared = regL.r_squared === null ? null : 1 - regL.r_squared;
+ 
+       return {
+         limit: TEadjust, seLimit: seAdjust, slope: betaR,
+         alpha_r: alphaR, beta_r: betaR, te_limit: teLimit,
+         Q: Q, Q_small: Qsmall, Q_resid: Qresid, G_squared: Gsquared,
+         tau2: tau2,
++        gReason: regL.r_squared === null ? 'shrunken radial regression total sum of squares is zero' : 'diagnostic arithmetic is non-finite',
+       };
+     }
+ 
++    function refuse(message) {
++      _lastResults = null;
++      document.getElementById('body').innerHTML = '';
++      document.getElementById('plot').innerHTML = '';
++      document.getElementById('limit-error').textContent = message;
++    }
++
+     function run() {
++      document.getElementById('limit-error').textContent = '';
++      document.getElementById('limit-range-note').textContent = '';
++      document.getElementById('limit-diagnostics').textContent = '';
+       var rows = parse(document.getElementById('src').value);
+-      if (rows.length < 3) { _lastResults = null; return; }
++      if (rows.length < 3) { refuse('At least three valid studies are required.'); return; }
++      if (rows.every(function (r) { return r.se === rows[0].se; })) {
++        refuse('Limit meta-analysis requires variation in study SEs.'); return;
++      }
+       var d = dl(rows);
+       var fe = pool(rows, 0);
+       var re = pool(rows, d.tau2);
+@@ -300,6 +322,25 @@
+         te_limit:  lim.te_limit,
+       };
+ 
++      // Diagnostics can be undefined without invalidating the fitted model.
++      var diagnosticKeys = ['Q', 'Q_small', 'Q_resid', 'G_squared'];
++      var valid = Object.keys(_lastResults).every(function (key) {
++        if (key === '_schema' || diagnosticKeys.indexOf(key) !== -1) return true;
++        var values = Array.isArray(_lastResults[key]) ? _lastResults[key] : [_lastResults[key]];
++        return values.every(Number.isFinite);
++      });
++      if (!valid) { refuse('Limit meta-analysis is numerically undefined for these studies.'); return; }
++
++      var diagnosticNotes = [];
++      diagnosticKeys.forEach(function (key) {
++        if (!Number.isFinite(_lastResults[key])) {
++          _lastResults[key] = null;
++          var reason = key === 'G_squared' ? lim.gReason : 'diagnostic arithmetic is non-finite';
++          diagnosticNotes.push(key + ': undefined (' + reason + ').');
++        }
++      });
++      document.getElementById('limit-diagnostics').textContent = diagnosticNotes.join(' ');
++
+       var body = document.getElementById('body');
+       var __bodyParts = [''];
+       __bodyParts.push('<tr><td><code>Fixed effect</code></td><td>' + fmt(fe.mean) + '</td><td>' + fmt(fe.seMean) + '</td><td>[' + fmt(fe.mean - Z975 * fe.seMean) + ', ' + fmt(fe.mean + Z975 * fe.seMean) + ']</td></tr>');
+@@ -332,29 +373,127 @@
+       var teMin = xMin !== null ? xMin : (Math.min(lim.limit, Math.min.apply(null, rows.map(function (r) { return r.te; }))) - 0.1);
+       var teMax = xMax !== null ? xMax : (Math.max(lim.limit, Math.max.apply(null, rows.map(function (r) { return r.te; }))) + 0.1);
+       var seMax = yMax !== null ? yMax : (Math.max.apply(null, rows.map(function (r) { return r.se; })) * 1.1);
+-      var X = function (v) { return padL + (v - teMin) / (teMax - teMin) * plotW; };
+-      var Y = function (s) { return padT + (s / seMax) * plotH; };
+-
+-      __svgParts.push('<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (padT + plotH) + '" stroke="currentColor" opacity="0.5"/>');
+-      __svgParts.push('<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '" stroke="currentColor" opacity="0.5"/>');
+-      // zero reference
+-      __svgParts.push('<line x1="' + X(0) + '" y1="' + padT + '" x2="' + X(0) + '" y2="' + (padT + plotH) + '" stroke="currentColor" stroke-dasharray="3 3" opacity="0.3"/>');
+-      // RE pooled line
+-      __svgParts.push('<line x1="' + X(re.mean) + '" y1="' + padT + '" x2="' + X(re.mean) + '" y2="' + (padT + plotH) + '" stroke="var(--accent)" stroke-width="1.5" opacity="0.75"/>');
+-      // Rücker limit (vertical)
+-      __svgParts.push('<line x1="' + X(lim.limit) + '" y1="' + padT + '" x2="' + X(lim.limit) + '" y2="' + (padT + plotH) + '" stroke="var(--warn)" stroke-width="1.5" opacity="0.85"/>');
+-      // Rücker regression line: te = limit + slope * SE
+-      var e1 = lim.limit, e2 = lim.limit + lim.slope * seMax;
+-      __svgParts.push('<line x1="' + X(e1) + '" y1="' + Y(0) + '" x2="' + X(e2) + '" y2="' + Y(seMax) + '" stroke="var(--warn)" stroke-dasharray="4 3" opacity="0.7"/>');
+-
++      var seMin = yMin !== null ? yMin : 0;
++      // Validate the effective ranges after combining automatic and explicit bounds.
++      // Plot errors must not discard the valid fitted table or exported results.
++      if (![teMin, teMax, seMin, seMax].every(Number.isFinite) ||
++          teMin >= teMax || seMin >= seMax) {
++        svg.innerHTML = '';
++        document.getElementById('limit-error').textContent =
++          'Plot range error: effective X and SE bounds must be finite, with min < max. Clear or adjust the axis overrides.';
++        return;
++      }
++      // Only data inside the resolved rectangle reaches pixel mapping.
++      var coordinates = [];
++      function point(x, y) { coordinates.push([x, y]); return x + ',' + y; }
++      function fraction(v, lo, hi) {
++        var span = hi - lo;
++        return Number.isFinite(span) ? (v - lo) / span :
++          (v / 2 - lo / 2) / (hi / 2 - lo / 2);
++      }
++      var X = function (v) { return padL + fraction(v, teMin, teMax) * plotW; };
++      var Y = function (s) { return padT + fraction(s, seMin, seMax) * plotH; };
++      function inside(x, lo, hi) { return x >= lo && x <= hi; }
++      function line(x1, y1, x2, y2, style) {
++        point(x1, y1); point(x2, y2);
++        __svgParts.push('<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" ' + style + '/>');
++      }
++      function label(x, y, text, color) {
++        point(x, y);
++        __svgParts.push('<text x="' + x + '" y="' + y + '" font-size="10" fill="' + color + '">' + text + '</text>');
++      }
++      __svgParts.push('<defs><clipPath id="limit-plot-clip"><rect x="60" y="20" width="520" height="280"/></clipPath></defs><g clip-path="url(#limit-plot-clip)">');
++      point(padL, padT); point(padL + plotW, padT + plotH);
++      line(padL, padT, padL, padT + plotH, 'stroke="currentColor" opacity="0.5"');
++      line(padL, padT + plotH, padL + plotW, padT + plotH, 'stroke="currentColor" opacity="0.5"');
++      if (inside(0, teMin, teMax)) line(X(0), padT, X(0), padT + plotH, 'stroke="currentColor" stroke-dasharray="3 3" opacity="0.3"');
++      if (inside(re.mean, teMin, teMax)) {
++        line(X(re.mean), padT, X(re.mean), padT + plotH, 'stroke="var(--accent)" stroke-width="1.5" opacity="0.75"');
++        label(Math.min(X(re.mean) + 4, padL + plotW), padT + 14, 'RE mean', 'var(--accent)');
++      }
++      if (inside(lim.limit, teMin, teMax)) {
++        line(X(lim.limit), padT, X(lim.limit), padT + plotH, 'stroke="var(--warn)" stroke-width="1.5" opacity="0.85"');
++        label(Math.min(X(lim.limit) + 4, padL + plotW), padT + 28, 'Rücker limit', 'var(--warn)');
++      }
++      // Sample only the visible SE interval. Clip segment endpoints in data
++      // space before X/Y; normalized arithmetic avoids overflowing differences.
++      function interpolate(a, b, t) { return a * (1 - t) + b * t; }
++      function clip(a, b) {
++        if ((a.x < teMin && b.x < teMin) || (a.x > teMax && b.x > teMax)) return null;
++        function endpoint(p, q) {
++          if (inside(p.x, teMin, teMax)) return p;
++          var edge = p.x < teMin ? teMin : teMax;
++          var t = fraction(edge, p.x, q.x);
++          return {x: edge, y: interpolate(p.y, q.y, t)};
++        }
++        return [endpoint(a, b), endpoint(b, a)];
++      }
++      var curve = [], previous = null, last = null;
++      function flush() {
++        if (curve.length) __svgParts.push('<polyline data-regression="true" points="' + curve.join(' ') + '" fill="none" stroke="var(--warn)" stroke-dasharray="4 3" opacity="0.7"/>');
++        curve = []; last = null;
++      }
++      for (var j = 0; j <= 64; j++) {
++        var s = interpolate(seMin, seMax, j / 64);
++        var fitted = lim.beta_r + (lim.alpha_r === 0 ? 0 : lim.alpha_r * Math.hypot(s, Math.sqrt(lim.tau2)));
++        // Overflowing extrapolation is outside any finite bound. A scaled
++        // representation retains its magnitude for data-space intersections.
++        var current = {x: fitted, y: s};
++        if (previous) {
++          var pair;
++          if (Number.isFinite(previous.x) && Number.isFinite(current.x)) {
++            pair = clip(previous, current);
++          } else {
++            var scale = Math.max(Math.abs(previous.y), Math.abs(s), Math.sqrt(lim.tau2), Math.abs(teMin), Math.abs(teMax), Math.abs(lim.beta_r), 1);
++            var scaled = function (v) { return lim.beta_r / scale + (lim.alpha_r === 0 ? 0 : lim.alpha_r * (Math.hypot(v, Math.sqrt(lim.tau2)) / scale)); };
++            var ax = scaled(previous.y), bx = scaled(s), lo = teMin / scale, hi = teMax / scale;
++            pair = null;
++            if (!((ax < lo && bx < lo) || (ax > hi && bx > hi))) {
++              var end = function (x, y, otherX, otherY) {
++                if (inside(x, lo, hi)) return {x: x * scale, y: y};
++                var edge = x < lo ? teMin : teMax;
++                return {x: edge, y: interpolate(y, otherY, fraction(edge / scale, x, otherX))};
++              };
++              pair = [end(ax, previous.y, bx, s), end(bx, s, ax, previous.y)];
++            }
++          }
++          if (!pair) flush();
++          else {
++            var first = point(X(pair[0].x), Y(pair[0].y));
++            var next = point(X(pair[1].x), Y(pair[1].y));
++            if (last !== first) { flush(); curve.push(first); }
++            curve.push(next); last = next;
++          }
++        }
++        previous = current;
++      }
++      flush();
++      var omitted = 0;
+       for (var i = 0; i < rows.length; i++) {
+-        __svgParts.push('<circle cx="' + X(rows[i].te) + '" cy="' + Y(rows[i].se) + '" r="4" fill="var(--accent)" opacity="0.8"/>');
++        if (!inside(rows[i].te, teMin, teMax) || !inside(rows[i].se, seMin, seMax)) { omitted++; continue; }
++        var cx = X(rows[i].te), cy = Y(rows[i].se);
++        point(cx, cy);
++        __svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="var(--accent)" opacity="0.8"/>');
++      }
++      label(padL + plotW / 2, padT + plotH - 6, 'Effect', 'currentColor');
++      label(padL + 4, padT + plotH / 2, 'SE', 'currentColor');
++      __svgParts.push('</g>');
++      var markup = __svgParts.join('');
++      // Single pre-install coordinate gate; tolerance covers floating-point
++      // rounding and subpixel strokes, never off-screen source values.
++      var tolerance = 1e-6;
++      if (!coordinates.every(function (p) {
++        return p.every(Number.isFinite) && inside(p[0], padL - tolerance, padL + plotW + tolerance) &&
++          inside(p[1], padT - tolerance, padT + plotH + tolerance);
++      })) {
++        svg.innerHTML = '';
++        document.getElementById('limit-error').textContent =
++          'Plot range error: coordinates cannot be represented inside the plot area. Clear or adjust the axis overrides.';
++        return;
+       }
+-      __svgParts.push('<text x="' + (X(re.mean) + 4) + '" y="' + (padT + 14) + '" font-size="10" fill="var(--accent)" opacity="0.9">RE mean</text>');
+-      __svgParts.push('<text x="' + (X(lim.limit) + 4) + '" y="' + (padT + 28) + '" font-size="10" fill="var(--warn)" opacity="0.9">Rücker limit</text>');
+-      __svgParts.push('<text x="' + (padL + plotW / 2) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11" fill="currentColor" opacity="0.7">Effect</text>');
+-      __svgParts.push('<text x="18" y="' + (padT + plotH / 2) + '" text-anchor="middle" font-size="11" fill="currentColor" opacity="0.7" transform="rotate(-90 18 ' + (padT + plotH / 2) + ')">SE</text>');
+-      svg.innerHTML = __svgParts.join('');
++      document.getElementById('limit-range-note').textContent = omitted ?
++        omitted + (omitted === 1 ? ' study outside the axis range is' : ' studies outside the axis range are') + ' not shown.' : '';
++      svg.innerHTML = markup;
+     }
+ 
+     // ---- snapshot/restore for reset-undo ----
+@@ -446,6 +585,13 @@
+       },
+     });
+ 
++    // This plot implements linear effect/SE axes only.
++    document.querySelectorAll('#alm-axis-mount [data-edge="log"]').forEach(function (input) {
++      input.disabled = true;
++      input.setAttribute('aria-describedby', 'limit-log-note');
++      input.parentNode.title = 'Log axes are not supported for this plot.';
++    });
++
+     window.alm.resultsExport({
+       target: '#alm-export-mount',
+       basename: 'limit-ma-results',
+diff --git a/limit-ma/tests/finite-plot-browser.cjs b/limit-ma/tests/finite-plot-browser.cjs
+new file mode 100644
+index 0000000..a531f45
+--- /dev/null
++++ b/limit-ma/tests/finite-plot-browser.cjs
+@@ -0,0 +1,119 @@
++const assert = require('node:assert/strict');
++const path = require('node:path');
++const fs = require('node:fs');
++const http = require('node:http');
++const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
++// Serve the selected snapshot with the checkout's actual shared assets.
++const root = path.resolve(__dirname, '../..');
++const target = path.resolve(process.argv[2] || path.join(__dirname, '../index.html'));
++const server = http.createServer((req, res) => {
++  const file = req.url === '/limit-ma/index.html' ? target : path.join(root, decodeURIComponent(req.url.split('?')[0]));
++  if (!file.startsWith(root + path.sep) && file !== target) { res.writeHead(403).end(); return; }
++  fs.readFile(file, (err, data) => { if (err) res.writeHead(404).end(); else res.end(data); });
++});
++(async () => {
++  await new Promise(resolve => server.listen(8000, '127.0.0.1', resolve));
++  const browser = await chromium.launch({channel: 'chrome'});
++  try {
++    const page = await browser.newPage();
++    await page.goto('http://127.0.0.1:8000/limit-ma/index.html');
++    const example = await page.locator('#src').inputValue();
++    const snapshot = () => page.evaluate(() => ({result: window._almLastLimit(),
++      table: document.querySelector('#body').innerHTML, diagnostics: document.querySelector('#limit-diagnostics').textContent,
++      controlError: document.querySelector('#alm-axis-mount [data-error]').textContent,
++      note: document.querySelector('#limit-range-note')?.textContent || '',
++      plot: document.querySelector('#plot').innerHTML, error: document.querySelector('#limit-error').textContent}));
++    const failures = [];
++    let count = 0;
++    for (const [name, input] of [['zero', '0,0.1\n0,0.2\n0,0.3'], ['example', example]]) {
++      await page.locator('#src').fill(input);
++      await page.locator('#btn-run').click();
++      const before = await snapshot();
++      assert.ok(before.result && before.plot.includes('<circle'));
++      const cases = [
++        {ymax:'1e-40', omitted:name === 'zero' ? 3 : null},
++        {ymax:'0.15', omitted:name === 'zero' ? 2 : null},
++        {xmin:'0.09999999999999999', omitted:name === 'zero' ? 3 : null},
++        {ymax:'1e200'}, {xmax:'1e300'}, {ymin:'1e-300'}
++      ];
++      let seed = 0x600d;
++      const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2**32; };
++      for (let i=0;i<250;i++) {
++        const c = {};
++        for (const key of ['xmin','xmax','ymin','ymax']) {
++          if (random()<0.3) continue;
++          c[key] = String((random()<0.5?-1:1)*10**(-300+600*random()));
++        }
++        cases.push(c);
++      }
++      for (const bounds of cases) {
++        await page.evaluate(bounds => {
++          for (const axis of ['x','y']) for (const edge of ['min','max']) {
++            const control = document.querySelector(`[data-axis="${axis}"][data-edge="${edge}"]`);
++            control.value = bounds[axis+edge] || '';
++            control.dispatchEvent(new Event('change', {bubbles:true}));
++          }
++        }, bounds);
++        const state = await snapshot();
++        try {
++          assert.ok(!/NaN|Infinity/.test(state.plot), 'nonfinite SVG');
++          const rows=input.split('\n').map(line=>line.trim().split(/[,\s]+/).slice(0,2).map(Number)).filter(r=>r.length===2 && r.every(Number.isFinite) && r[1]>0);
++          const xmin=bounds.xmin == null ? Math.min(before.result.limit_est,...rows.map(r=>r[0]))-.1 : Number(bounds.xmin);
++          const xmax=bounds.xmax == null ? Math.max(before.result.limit_est,...rows.map(r=>r[0]))+.1 : Number(bounds.xmax);
++          const ymin=bounds.ymin == null ? 0 : Number(bounds.ymin);
++          const ymax=bounds.ymax == null ? Math.max(...rows.map(r=>r[1]))*1.1 : Number(bounds.ymax);
++          const valid=xmin<xmax && ymin<ymax;
++          if(valid) assert.equal(state.error, '', 'valid bounds must never trigger installation guard');
++          else if(state.controlError) {
++            assert.match(state.controlError, /min must be < max/);
++            assert.ok(await page.locator('#alm-axis-mount [data-error]').isVisible());
++          } else assert.equal(state.plot, '', 'invalid effective bounds must fail closed');
++          const expected=rows.filter(r=>r[0]>=xmin&&r[0]<=xmax&&r[1]>=ymin&&r[1]<=ymax).length;
++          assert.deepEqual(state.result, before.result, 'export preserved');
++          assert.equal(state.table, before.table); assert.equal(state.diagnostics, before.diagnostics);
++          if (!state.plot) {
++            assert.match(state.error, /plot.*error/i);
++            assert.ok(await page.locator('#limit-error[role="alert"]').isVisible());
++            assert.equal(state.plot, '');
++          }
++          const geometry = await page.evaluate(() => {
++            const xy = [];
++            for (const n of document.querySelectorAll('#plot circle')) xy.push([n.cx.baseVal.value,n.cy.baseVal.value]);
++            for (const n of document.querySelectorAll('#plot polyline')) for (let i=0;i<n.points.numberOfItems;i++) {
++              const p=n.points.getItem(i); xy.push([p.x,p.y]);
++            }
++            for (const n of document.querySelectorAll('#plot line')) xy.push([n.x1.baseVal.value,n.y1.baseVal.value],[n.x2.baseVal.value,n.y2.baseVal.value]);
++            for (const n of document.querySelectorAll('#plot text')) xy.push([n.x.baseVal.getItem(0).value,n.y.baseVal.getItem(0).value]);
++            return {xy, count:document.querySelectorAll('#plot circle').length,
++              note:document.querySelector('#limit-range-note')?.textContent || '',
++              clip:!!document.querySelector('#plot clipPath rect')};
++          });
++          assert.ok(geometry.xy.every(([x,y]) => Number.isFinite(x)&&Number.isFinite(y)&&x>=60-1e-4&&x<=580+1e-4&&y>=20-1e-4&&y<=300+1e-4), 'native SVG coordinate outside plot');
++          if(valid) {
++            assert.equal(geometry.count, expected, 'omit exactly the out-of-range studies');
++            if(expected<rows.length) {
++              assert.match(geometry.note, new RegExp(`^${rows.length-expected} stud`));
++              assert.ok(await page.locator('#limit-range-note').isVisible());
++            } else assert.equal(geometry.note, '');
++          }
++          if (bounds.omitted != null) {
++            assert.equal(state.error, '', 'valid zoom must draw without an error');
++            assert.equal(geometry.count, 3-bounds.omitted);
++            assert.match(geometry.note, new RegExp(`^${bounds.omitted} stud`));
++            assert.ok(await page.locator('#limit-range-note').isVisible());
++          }
++          if(state.plot) assert.ok(geometry.clip, 'clipPath backstop');
++        } catch (error) { failures.push(`${name} ${JSON.stringify(bounds)}: ${error.message}`); }
++        await page.evaluate(() => {
++          for (const control of document.querySelectorAll('[data-edge="min"], [data-edge="max"]')) {
++            control.value=''; control.dispatchEvent(new Event('change',{bubbles:true}));
++          }
++        });
++        assert.deepEqual(await snapshot(), before, 'clearing restores finite plot');
++        count++;
++      }
++    }
++    assert.deepEqual(failures, []);
++    console.log(`PASS: ${count} finite-bound cases; export/table/diagnostics preserved and recovery verified`);
++  } finally { await browser.close(); }
++})().catch(error => {console.error(error); process.exitCode=1;}).finally(() => server.close());
+diff --git a/limit-ma/tests/log-controls-browser.cjs b/limit-ma/tests/log-controls-browser.cjs
+new file mode 100644
+index 0000000..74415b1
+--- /dev/null
++++ b/limit-ma/tests/log-controls-browser.cjs
+@@ -0,0 +1,40 @@
++// Real DOM checks: numeric stubs cannot establish accessibility.
++const assert = require('node:assert/strict');
++const {pathToFileURL} = require('node:url');
++const path = require('node:path');
++const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
++
++(async () => {
++  const browser = await chromium.launch({channel: 'chrome'});
++  try {
++    const page = await browser.newPage();
++    await page.goto(pathToFileURL(path.resolve(
++      process.env.LIMIT_MA_PAGE || process.argv[2] || path.join(__dirname, '../index.html')
++    )).href);
++    const controls = page.locator('#alm-axis-mount input[data-edge="log"]');
++    assert.equal(await controls.count(), 2, 'Expected both log toggles');
++    const descriptionIds = [];
++    for (const control of await controls.all()) {
++      assert.ok(await control.isDisabled(), 'Log toggle must be disabled');
++      const describedby = await control.getAttribute('aria-describedby');
++      assert.ok(describedby?.trim(), 'Log toggle needs aria-describedby');
++      let explanationId;
++      for (const id of describedby.trim().split(/\s+/)) {
++        const description = page.locator('[id=' + JSON.stringify(id) + ']');
++        assert.equal(await description.count(), 1, 'Description id must resolve: ' + id);
++        assert.ok(await description.isVisible(), 'Description must be visible: ' + id);
++        const text = await description.innerText();
++        if (/\blog(?:arithmic)?\b/i.test(text) && /\bax(?:es|is)\b/i.test(text) &&
++            /\b(?:unsupported|not\s+supported|unavailable)\b/i.test(text)) {
++          explanationId = id;
++        }
++      }
++      assert.ok(explanationId, 'Visible description must explain that log axes are unsupported');
++      descriptionIds.push(explanationId);
++    }
++    assert.equal(descriptionIds[0], descriptionIds[1], 'Both toggles must reference the explanation');
++    console.log('PASS: two disabled log toggles reference a visible explanation that log axes are unsupported');
++  } finally {
++    await browser.close();
++  }
++})().catch(error => { console.error(error); process.exitCode = 1; });
+diff --git a/limit-ma/tests/page-probe.cjs b/limit-ma/tests/page-probe.cjs
+new file mode 100644
+index 0000000..79dafaf
+--- /dev/null
++++ b/limit-ma/tests/page-probe.cjs
+@@ -0,0 +1,42 @@
++// Executes the actual inline app script; DOM/shared UI stubs are intentionally minimal.
++const fs = require('node:fs');
++const vm = require('node:vm');
++const html = fs.readFileSync(process.argv[2], 'utf8');
++const nodes = {};
++function node() {
++  return {value: '', innerHTML: '', textContent: '', attrs: {}, parentNode: {},
++    addEventListener(event, fn) { this[event] = fn; },
++    setAttribute(key, value) { this.attrs[key] = value; },
++    getAttribute(key) { return this.attrs[key]; }};
++}
++for (const m of html.matchAll(/<([a-z][\w-]*)\b[^>]*\bid="([^"]+)"[^>]*>([^<]*)/gi)) {
++  nodes[m[2]] = node(); nodes[m[2]].textContent = m[3];
++}
++nodes.src.value = html.match(/<textarea[^>]*>([\s\S]*?)<\/textarea>/)[1];
++const logs = [node(), node()];
++const document = {getElementById: id => nodes[id] || null,
++  querySelectorAll: selector => {
++    if (selector !== '#alm-axis-mount [data-edge="log"]') {
++      throw new Error('Unexpected selector in numeric DOM stub: ' + selector);
++    }
++    return logs;
++  }};
++const noop = () => {};
++const alm = {csvUpload: noop, chartDownload: noop, axisControls: noop,
++  resultsExport: noop, urlState: Object.assign(noop, {read: () => null}),
++  resetUndo: noop, tooltips: noop};
++const window = {alm};
++vm.runInNewContext(html.match(/<script>\s*([\s\S]*?)<\/script>/)[1], {window, document});
++function fit(text) {
++  nodes.src.value = text; nodes['btn-run'].click();
++  return {gIsNull: window._almLastLimit()?.G_squared === null, result: window._almLastLimit(), table: nodes.body.innerHTML,
++    plot: nodes.plot.innerHTML, error: nodes['limit-error']?.textContent || '',
++    diagnostics: nodes['limit-diagnostics']?.textContent || ''};
++}
++const normal = nodes.src.value;
++const zero = fit('0, 0.1\n0, 0.2\n0, 0.3');
++const recovery = ['0.1, 0.1\n0.2, 0.2', '0.1, 0.2\n0.2, 0.2\n0.3, 0.2'].map(bad =>
++  ({before: fit(normal), refused: fit(bad), after: fit(normal), zeroAfter: fit('0, 0.1\n0, 0.2\n0, 0.3')}));
++const overflow = fit('1e308, 0.1\n-1e308, 0.2\n1e308, 0.3');
++console.log(JSON.stringify({zero, recovery, overflow, logs: logs.map(n => ({disabled: n.disabled,
++  describedby: n.attrs['aria-describedby'], description: nodes[n.attrs['aria-describedby']]?.textContent})), html}));
+diff --git a/limit-ma/tests/range-browser.cjs b/limit-ma/tests/range-browser.cjs
+new file mode 100644
+index 0000000..63a1923
+--- /dev/null
++++ b/limit-ma/tests/range-browser.cjs
+@@ -0,0 +1,43 @@
++const assert = require('node:assert/strict');
++const {pathToFileURL} = require('node:url');
++const path = require('node:path');
++const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
++
++(async () => {
++  const browser = await chromium.launch({channel: 'chrome'});
++  try {
++    const page = await browser.newPage();
++    await page.goto(pathToFileURL(path.resolve(process.argv[2] || path.join(__dirname, '../index.html'))).href);
++    await page.locator('#src').fill('0,0.1\n0,0.2\n0,0.3');
++    await page.locator('#btn-run').click();
++    const snapshot = () => page.evaluate(() => ({
++      result: window._almLastLimit(), table: document.querySelector('#body').innerHTML,
++      plot: document.querySelector('#plot').innerHTML,
++      error: document.querySelector('#limit-error').textContent,
++    }));
++    const before = await snapshot();
++    assert.equal(before.result.k, 3);
++    assert.ok(before.plot.includes('<circle'));
++    const failures = [];
++    for (const [axis, value] of [['y', '0.33'], ['y', '0.34'], ['x', '0.1'], ['x', '0.2']]) {
++      const input = page.locator(`[data-axis="${axis}"][data-edge="min"]`);
++      await input.fill(value);
++      await input.dispatchEvent('change');
++      const state = await snapshot();
++      console.log(JSON.stringify({axis, value, error: state.error, nonfinite: /NaN|Infinity/.test(state.plot), plotEmpty: !state.plot, resultsKept: JSON.stringify(state.result) === JSON.stringify(before.result)}));
++      try {
++        assert.match(state.error, /range/i, 'Invalid effective range needs a visible range error');
++        assert.ok(await page.locator('#limit-error[role="alert"]').isVisible());
++        assert.equal(state.plot, '', 'Invalid range must clear the plot');
++        assert.deepEqual(state.result, before.result, 'Export results must be preserved');
++        assert.equal(state.table, before.table);
++      } catch (error) { failures.push(`${axis}=${value}: ${error.message}`); }
++      await input.fill('');
++      await input.dispatchEvent('change');
++      assert.deepEqual(await snapshot(), before, 'Clearing override must restore the finite plot and results');
++      assert.ok(!/NaN|Infinity/.test((await snapshot()).plot));
++    }
++    assert.deepEqual(failures, []);
++    console.log('PASS: equal/exceeding automatic X and SE bounds alert and clear only the plot; clearing overrides restores finite coordinates');
++  } finally { await browser.close(); }
++})().catch(error => { console.error(error); process.exitCode = 1; });
+diff --git a/limit-ma/tests/test_page_regressions.py b/limit-ma/tests/test_page_regressions.py
+new file mode 100644
+index 0000000..533bc8e
+--- /dev/null
++++ b/limit-ma/tests/test_page_regressions.py
+@@ -0,0 +1,81 @@
++"""Synthetic regression probes of the actual page script, not a formula mirror."""
++import json
++import os
++from pathlib import Path
++import subprocess
++
++import pytest
++
++HERE = Path(__file__).parent
++
++
++@pytest.fixture(scope="module")
++def probe():
++    page = Path(os.environ.get("LIMIT_MA_PAGE", HERE.parent / "index.html")).resolve()
++    proc = subprocess.run(["node", str(HERE / "page-probe.cjs"), str(page)],
++                          capture_output=True, text=True, encoding="utf-8", check=True)
++    return json.loads(proc.stdout)
++
++
++def test_zero_effect_preserves_fit_and_explicit_null(probe):
++    state = probe["zero"]
++    r = state["result"]
++    assert r is not None, state["error"]
++    assert r["limit_est"] == 0
++    assert r["limit_se"] == pytest.approx(0.20380986614602722, abs=1e-12)
++    assert r["G_squared"] is None
++    assert state["gIsNull"]
++    assert r["Q_small"] == 0
++    assert r["Q_resid"] == 0
++    assert state["table"].count("<tr") == 3
++    assert "<circle" in state["plot"]
++    assert "NaN" not in state["plot"] + state["table"]
++    assert "undefined" in state["diagnostics"]
++    assert "total sum of squares is zero" in state["diagnostics"]
++    assert "null" in probe["html"] and "G_squared" in probe["html"]
++
++
++@pytest.mark.parametrize("index", [0, 1], ids=["two-studies", "equal-SEs"])
++def test_refusal_and_full_recovery(probe, index):
++    states = probe["recovery"][index]
++    assert states["before"]["result"] is not None
++    refused = states["refused"]
++    assert refused["result"] is None
++    assert refused["table"] == refused["plot"] == refused["diagnostics"] == ""
++    assert refused["error"]
++    assert states["after"] == states["before"]
++    assert states["zeroAfter"]["result"] is not None
++
++
++def test_log_controls_have_visible_description():
++    page = Path(os.environ.get("LIMIT_MA_PAGE", HERE.parent / "index.html")).resolve()
++    proc = subprocess.run(
++        ["node", str(HERE / "log-controls-browser.cjs"), str(page)],
++        capture_output=True, text=True, encoding="utf-8", timeout=60,
++    )
++    assert proc.returncode == 0, proc.stdout + proc.stderr
++
++
++def test_nonfinite_essential_fit_is_refused(probe):
++    state = probe["overflow"]
++    assert state["result"] is None
++    assert state["table"] == state["plot"] == ""
++    assert state["error"]
++
++
++def test_effective_plot_ranges_in_chrome():
++    page = Path(os.environ.get("LIMIT_MA_PAGE", HERE.parent / "index.html")).resolve()
++    proc = subprocess.run(
++        ["node", str(HERE / "range-browser.cjs"), str(page)],
++        capture_output=True, text=True, encoding="utf-8", timeout=90,
++    )
++    assert proc.returncode == 0, proc.stdout + proc.stderr
++
++
++def test_extreme_finite_plot_bounds_in_chrome():
++    page = Path(os.environ.get("LIMIT_MA_PAGE", HERE.parent / "index.html")).resolve()
++    proc = subprocess.run(
++        ["node", str(HERE / "finite-plot-browser.cjs"), str(page)],
++        capture_output=True, text=True, encoding="utf-8", timeout=180,
++    )
++    assert proc.returncode == 0, proc.stdout + proc.stderr

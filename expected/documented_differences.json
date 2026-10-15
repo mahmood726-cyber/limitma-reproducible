@@ -1,0 +1,9 @@
+{
+  "dat.hartmannboyce2018::001": {
+    "quantity": "status",
+    "reference_status": "refused",
+    "app_status": "ok",
+    "reason": "Fisher scoring algorithm did not converge. See 'help(rma)' for possible remedies.",
+    "phase": "limitmeta beta0 (including internal metagen call)"
+  }
+}

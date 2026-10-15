@@ -1,0 +1,4 @@
+{
+  "paths": [],
+  "reason": "Optional webR runtime probes absent from source; retained for audit. Successful live fit is recorded in browser evidence."
+}

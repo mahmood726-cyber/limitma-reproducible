@@ -1,0 +1,75 @@
+[
+  {
+    "name": "default fixture k",
+    "actual": 10,
+    "expected": 10,
+    "pass": true
+  },
+  {
+    "name": "SE minimum applies to point coordinates",
+    "actual": false,
+    "expected": true,
+    "pass": false
+  },
+  {
+    "name": "unsupported log axes disabled",
+    "actual": 2,
+    "expected": 0,
+    "pass": false
+  },
+  {
+    "name": "minimum k refuses exported result",
+    "actual": null,
+    "expected": null,
+    "pass": true,
+    "reason": "No explicit reason displayed; fewer than three parsed rows."
+  },
+  {
+    "name": "minimum k clears stale table",
+    "actual": 3,
+    "expected": 0,
+    "pass": false
+  },
+  {
+    "name": "minimum k clears stale plot",
+    "actual": 10,
+    "expected": 0,
+    "pass": false
+  },
+  {
+    "name": "equal SE singularity refuses result",
+    "actual": {
+      "k": 3,
+      "fe_est": 0.2,
+      "fe_se": 0.11547005383792516,
+      "fe_ci_lo": -0.026317146815234338,
+      "fe_ci_hi": 0.42631714681523436,
+      "re_est": 0.2,
+      "re_se": 0.11547005383792516,
+      "re_ci_lo": -0.026317146815234338,
+      "re_ci_hi": 0.42631714681523436,
+      "tau2_dl": 0,
+      "tau_dl": 0,
+      "limit_est": null,
+      "limit_se": null,
+      "limit_ci_lo": null,
+      "limit_ci_hi": null,
+      "slope": null,
+      "_schema": "limit-ma-results-v2",
+      "alpha_r": null,
+      "beta_r": null,
+      "Q": 0.4999999999999999,
+      "Q_small": null,
+      "Q_resid": null,
+      "G_squared": null,
+      "te_limit": [
+        null,
+        null,
+        null
+      ]
+    },
+    "expected": null,
+    "pass": false,
+    "reason": "No explicit refusal displayed for equal-SE singularity."
+  }
+]

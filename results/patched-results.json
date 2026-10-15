@@ -1,0 +1,244 @@
+{
+  "configurations": 169,
+  "datasets_used": 113,
+  "checks": 55525,
+  "pass": 55524,
+  "failed": 1,
+  "quantities": {
+    "status": {
+      "checks": 169,
+      "pass": 168,
+      "max_difference": 1.0,
+      "tolerance": 1e-09,
+      "worst_id": "dat.hartmannboyce2018::001"
+    },
+    "k": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 0.0,
+      "tolerance": 1e-09,
+      "worst_id": null
+    },
+    "fe_est": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 8.881784197001252e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.mccurdy2020::001"
+    },
+    "fe_se": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 1.1102230246251565e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.ishak2007::002"
+    },
+    "fe_ci_lo": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 8.881784197001252e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.mccurdy2020::001"
+    },
+    "fe_ci_hi": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 9.992007221626409e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.roever2022::001"
+    },
+    "re_est": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 1.2212453270876722e-15,
+      "tolerance": 1e-09,
+      "worst_id": "dat.mccurdy2020::001"
+    },
+    "re_se": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 3.4649139111754116e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.normand1999::001"
+    },
+    "re_ci_lo": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 1.4432899320127035e-15,
+      "tolerance": 1e-09,
+      "worst_id": "dat.li2007::001"
+    },
+    "re_ci_hi": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 1.2212453270876722e-15,
+      "tolerance": 1e-09,
+      "worst_id": "dat.mccurdy2020::001"
+    },
+    "tau2_dl": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 5.828670879282072e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.egger2001::001"
+    },
+    "tau_dl": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 9.43689570931383e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.collins1985a::003"
+    },
+    "limit_est": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 1.3322676295501878e-14,
+      "tolerance": 1e-09,
+      "worst_id": "dat.mccurdy2020::001"
+    },
+    "limit_se": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 5.848760364912664e-11,
+      "tolerance": 1e-09,
+      "worst_id": "dat.senn2013::001"
+    },
+    "limit_ci_lo": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 1.1463685556378778e-10,
+      "tolerance": 1e-09,
+      "worst_id": "dat.senn2013::001"
+    },
+    "limit_ci_hi": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 8.557625631656639e-11,
+      "tolerance": 1e-09,
+      "worst_id": "dat.senn2013::001"
+    },
+    "slope": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 2.823857614233928e-13,
+      "tolerance": 1e-09,
+      "worst_id": "dat.senn2013::001"
+    },
+    "alpha_r": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 2.9231884581736527e-13,
+      "tolerance": 1e-09,
+      "worst_id": "dat.senn2013::001"
+    },
+    "beta_r": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 2.823857614233928e-13,
+      "tolerance": 1e-09,
+      "worst_id": "dat.senn2013::001"
+    },
+    "Q": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 8.89203172797135e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.mcdaniel1994::002"
+    },
+    "Q_small": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 4.3765543376046455e-13,
+      "tolerance": 1e-09,
+      "worst_id": "dat.bourassa1996::001"
+    },
+    "Q_resid": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 9.087809988677873e-15,
+      "tolerance": 1e-09,
+      "worst_id": "dat.crisafulli2020::001"
+    },
+    "G_squared": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 3.219646771412954e-15,
+      "tolerance": 1e-09,
+      "worst_id": "dat.kearon1998::002"
+    },
+    "te_limit_length": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 0.0,
+      "tolerance": 1e-09,
+      "worst_id": null
+    },
+    "te_limit": {
+      "checks": 9716,
+      "pass": 9716,
+      "max_difference": 6.488249565738745e-14,
+      "tolerance": 1e-09,
+      "worst_id": "dat.kearon1998::002"
+    },
+    "table_render": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 0.0,
+      "tolerance": 1e-09,
+      "worst_id": null
+    },
+    "points_length": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 0.0,
+      "tolerance": 1e-09,
+      "worst_id": null
+    },
+    "points_x": {
+      "checks": 9716,
+      "pass": 9716,
+      "max_difference": 2.0301221021717147e-15,
+      "tolerance": 1e-09,
+      "worst_id": "dat.normand1999::001"
+    },
+    "points_y": {
+      "checks": 9716,
+      "pass": 9716,
+      "max_difference": 2.220446049250313e-16,
+      "tolerance": 1e-09,
+      "worst_id": "dat.bassler2004::001"
+    },
+    "regression_length": {
+      "checks": 168,
+      "pass": 168,
+      "max_difference": 0.0,
+      "tolerance": 1e-09,
+      "worst_id": null
+    },
+    "regression_x": {
+      "checks": 10920,
+      "pass": 10920,
+      "max_difference": 9.916161436058276e-14,
+      "tolerance": 1e-09,
+      "worst_id": "dat.kearon1998::002"
+    },
+    "regression_y": {
+      "checks": 10920,
+      "pass": 10920,
+      "max_difference": 1.2212453270876722e-15,
+      "tolerance": 1e-09,
+      "worst_id": "dat.rivera2025::002"
+    }
+  },
+  "failures": [
+    {
+      "id": "dat.hartmannboyce2018::001",
+      "quantity": "status",
+      "app": 0,
+      "reference": 1,
+      "difference": 1.0,
+      "reference_reason": "Fisher scoring algorithm did not converge. See 'help(rma)' for possible remedies.",
+      "app_reason": ""
+    }
+  ]
+}
