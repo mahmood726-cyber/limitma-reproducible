@@ -50,4 +50,4 @@ The original page passed **44,772/55,525** checks; the corrected page passes **5
 | Refusal | Exact keyed reason from source run | Fresh R must reproduce it; no invented app refusal |
 | Browser validation | Pinned reference and package binaries | Current page outputs, live R, comparisons and verdicts |
 
-MIT licensed. Derived from [allmeta](https://github.com/mahmood726-cyber/allmeta) and allmeta v1.3.0, DOI **10.5281/zenodo.23330389**. No new archive DOI is claimed.
+MIT licensed. Derived from [allmeta](https://github.com/mahmood726-cyber/allmeta) and allmeta v1.4.0, DOI **10.5281/zenodo.23404527**. No new archive DOI is claimed.
