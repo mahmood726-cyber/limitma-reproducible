@@ -38,7 +38,7 @@ def verify():
   p=base/f.get('path','repo/'+manifest['layout']+f['file']);assert sha(p)==f['sha256'] and p.stat().st_size==f['bytes']
  z=read(ROOT/'.zenodo.json');cff=(ROOT/'CITATION.cff').read_text(encoding='utf-8')
  assert z['title']=='Limit meta-analysis in the browser: validation against the R package metasens'
- assert z['creators']==[{'name':'Ahmad, Mahmood'}] and z['license']=='MIT' and z['version']=='1.0.0'
+ assert z['creators']==[{'name':'Ahmad, Mahmood'}] and z['license']=='MIT' and z['version']=='1.1.0'
  assert 'family-names: Ahmad' in cff and 'given-names: Mahmood' in cff and '4a053dd' in cff and 'e431057' in cff and '<ALLMETA_COMMIT>' not in cff
  assert {(x['identifier'],x['relation']) for x in z['related_identifiers']}=={('https://github.com/mahmood726-cyber/allmeta','isDerivedFrom'),('10.5281/zenodo.23330389','isDerivedFrom')}
  table=list(csv.DictReader((ROOT/'outputs/table1_by_quantity.csv').open(encoding='utf-8')))

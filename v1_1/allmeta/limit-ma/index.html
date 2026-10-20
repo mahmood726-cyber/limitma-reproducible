@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'">
+  <link rel="stylesheet" href="../shared/forced-colors.css">
+  <meta name="description" content="Limit meta-analysis (Rücker 2011): adjusts the pooled effect for small-study effects by extrapolating to the zero-variance limit.">
+  <meta name="color-scheme" content="light dark">
+  <title>Limit meta-analysis</title>
+  <style>
+    :root { --bg:#f6f4ef; --panel:#fff; --ink:#15181d; --muted:#5c6470;
+            --accent:#2c5e8a; --accent-soft:#e8f0f7; --warn:#b05a1c;
+            --warn-soft:#fbeedd; --border:#d9d5cc; --input-bg:#fbfaf6; }
+    @media (prefers-color-scheme:dark) {
+      :root { --bg:#141618; --panel:#1c1f23; --ink:#e7e4dc; --muted:#98a0ae;
+              --accent:#6aa6d4; --accent-soft:#223044; --warn:#e0a268;
+              --warn-soft:#3a2d1c; --border:#2f343a; --input-bg:#23272c; }
+    }
+    @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; } }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+           background: var(--bg); color: var(--ink); min-height: 100vh; line-height: 1.5; }
+    header { padding: 2rem clamp(1rem, 3vw, 3rem) 1rem; border-bottom: 1px solid var(--border); background: var(--panel); }
+    header h1 { margin: 0 0 0.25rem; font-size: 1.6rem; letter-spacing: -0.01em; }
+    header p { margin: 0; color: var(--muted); font-size: 0.95rem; max-width: 72ch; }
+    main { padding: 1.5rem clamp(1rem, 3vw, 3rem); display: grid; gap: 1.5rem;
+           grid-template-columns: minmax(300px, 24rem) 1fr; align-items: start; }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; }
+    .panel h2 { margin: 0 0 0.75rem; font-size: 0.85rem; font-weight: 600;
+                text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    textarea { width: 100%; min-height: 11rem; padding: 0.5rem 0.65rem;
+               border: 1px solid var(--border); background: var(--input-bg); color: var(--ink);
+               border-radius: 6px; font: 0.84rem/1.4 "SF Mono", Consolas, monospace; }
+    button.primary { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1rem;
+                     border-radius: 6px; font-weight: 600; font-size: 0.88rem; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.87rem; margin-bottom: 1rem; }
+    th, td { padding: 0.4rem 0.55rem; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    td code { background: var(--accent-soft); padding: 0.1rem 0.4rem; border-radius: 4px; }
+    svg { width: 100%; height: auto; display: block; }
+    #loo-plot[hidden] { display: none; }
+    .note { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 0.55rem 0.8rem;
+            border-radius: 4px; font-size: 0.82rem; margin-top: 0.75rem; }
+    .note strong { color: var(--warn); }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem;
+               padding-top: 0.75rem; border-top: 1px dashed var(--border); align-items: center; }
+    footer { padding: 1rem clamp(1rem, 3vw, 3rem) 2rem; color: var(--muted); font-size: 0.8rem; }
+    footer code { background: var(--accent-soft); padding: 0.1rem 0.35rem; border-radius: 3px; }
+  </style>
+  <link rel="stylesheet" href="../hub/app-style.css">
+  <!-- Cycle 2.8 Task 4 shared UX modules — wired per RETROFIT_AUDIT.md:
+       wired: csv-upload, chart-download, axis-controls, results-export, url-state, reset-undo, tooltips -->
+  <script src="../hub/shared/csv-upload.js"></script>
+  <script src="../hub/shared/plot-export.js"></script>
+  <script src="../hub/shared/axis-controls.js"></script>
+  <script src="../hub/shared/results-export.js"></script>
+  <script src="../hub/shared/url-state.js"></script>
+  <script src="../hub/shared/reset-undo.js"></script>
+  <script src="../hub/shared/tooltips.js"></script>
+  <script src="../shared/build-info.js"></script>
+  <script src="../shared/ma-studies-v1.js"></script>
+  <script src="../shared/truthcert-export.js"></script>
+  <script src="../shared/truthcert-ui.js"></script>
+  <script src="../shared/app-flow.js"></script>
+  <script src="../shared/canonical-datasets.js"></script>
+  <script src="../shared/hero-examples.js"></script>
+  <script src="../shared/citation.js"></script>
+  <script src="../shared/autosave.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main" style="position:absolute;left:-9999px;top:-9999px;z-index:99999;padding:6px 10px;background:#000;color:#fff;border-radius:4px;text-decoration:none" onfocus="this.style.left='12px';this.style.top='12px'" onblur="this.style.left='-9999px';this.style.top='-9999px'">Skip to main content</a>
+<a id="hub-back" href="../" aria-label="Back to allmeta hub" style="position:fixed;top:12px;left:12px;z-index:99999;padding:6px 12px;background:rgba(28,31,35,0.85);color:#fff;text-decoration:none;border-radius:14px;font:600 12px/1 system-ui,sans-serif;letter-spacing:.04em;box-shadow:0 2px 8px rgba(0,0,0,0.18);transition:opacity .15s ease;opacity:.85" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.85'">&#8592; allmeta</a>
+  <header>
+    <h1>Limit meta-analysis (R&#252;cker)</h1>
+    <p>Adjusts the pooled effect for small-study effects by extrapolating to the zero-variance limit via a shrunken random-effects model. R&#252;cker et al., Biostatistics 2011. R-parity: verified against <code>metasens::limitmeta(metagen(...))</code>.</p>
+  </header>
+  <main id="main">
+    <section class="panel">
+      <h2>Input</h2>
+
+      <!-- csv-upload mount -->
+
+
+      <label style="display:block; font-size:0.85rem; margin-bottom:0.4rem">Studies &#8212; <code>effect, SE, label (optional)</code></label>
+      <textarea id="src" aria-label="Studies — effect, SE, label (one per line)">0.55, 0.08, S01
+0.48, 0.10, S02
+0.70, 0.15, S03
+0.60, 0.09, S04
+0.30, 0.07, S05
+0.75, 0.20, S06
+0.52, 0.08, S07
+0.65, 0.12, S08
+0.45, 0.17, S09
+0.58, 0.10, S10</textarea>
+      <button type="button" id="btn-run" class="primary" style="width:100%;margin-top:0.5rem">Run analysis</button>
+      <div id="analysis-status" role="status" aria-live="polite" hidden>Analysis updated</div>
+      <div id="analysis-stale" hidden>Results out of date — press Run analysis</div>
+      <div id="alm-csv-mount"></div>
+        <div id="alm-hero-mount" aria-label="Load a famous benchmark dataset"></div>
+        <div id="alm-cite-mount" style="margin-top:0.4rem"></div>
+      <div style="display:flex;gap:0.4rem;margin-top:0.4rem">
+        <button type="button" id="btn-bus-load" style="flex:1" title="Load studies from the shared ma-studies-v1 bus">Load from bus</button>
+        <button type="button" id="btn-bus-save" style="flex:1" title="Save current studies to the shared ma-studies-v1 bus">Save to bus</button><button type="button" id="btn-verify-in-r" title="Push current studies to the shared bus and open WebR Validator pre-loaded with metafor — independent R verification in your browser." style="background:#2a6cae;color:#fff;border:1px solid #2a6cae;border-radius:6px;padding:0.45rem 0.85rem;font-weight:600;cursor:pointer;">Verify in R</button><button type="button" id="btn-truthcert" title="Download an HMAC-signed TruthCert receipt of the current studies &mdash; re-verifiable offline with your signing key." style="background:#7c3aed;color:#fff;border:1px solid #7c3aed;border-radius:6px;padding:0.45rem 0.85rem;font-weight:600;cursor:pointer;">TruthCert receipt</button><button type="button" id="btn-truthcert-key" title="Set or generate the TruthCert signing key (shared across all allmeta apps)." style="border:1px solid var(--border);border-radius:6px;padding:0.45rem 0.85rem;cursor:pointer;background:transparent;color:inherit;">&#128273; Key</button>
+      </div>
+
+      <!-- reset-undo mount -->
+      <div id="alm-undo-mount"></div>
+    </section>
+    <section class="panel">
+      <h2>Pooled vs limit</h2>
+      <div id="limit-error" role="alert"></div>
+      <div id="limit-range-note" aria-live="polite"></div>
+      <table>
+        <thead><tr><th>Method</th><th>Estimate</th><th>SE</th><th>95% CI</th></tr></thead>
+        <tbody id="body"></tbody>
+      </table>
+      <div id="limit-diagnostics" aria-live="polite"></div>
+      <h2 style="margin-top:0.6rem">Funnel + R&#252;cker regression</h2>
+
+      <!-- axis-controls mount -->
+      <div id="alm-axis-mount"></div>
+      <p id="limit-log-note">Log axes are not supported for this plot; effect and SE axes are linear.</p>
+
+      <svg id="plot" viewBox="0 0 600 340" role="img" aria-label="Funnel plot with R&#252;cker limit extrapolation line"></svg>
+
+      <!-- plot-export mount -->
+      <div id="alm-plot-mount"></div>
+
+      <div class="note"><strong>Interpretation:</strong> the limit estimate is the value the random-effects model would return if all studies had zero sampling error. A large gap between the standard random-effects estimate and the limit estimate indicates small-study effects (possibly pub bias).</div>
+
+      <p>Export schema <code>limit-ma-results-v2</code>: unavailable diagnostics
+        (<code>Q</code>, <code>Q_small</code>, <code>Q_resid</code>, <code>G_squared</code>)
+        are exported as <code>null</code>, with the reason shown above. In particular, G&#178; is undefined
+        when the shrunken radial regression total sum of squares is zero.</p>
+      <!-- results-export mount -->
+      <div class="actions">
+        <div id="alm-export-mount"></div>
+      </div>
+
+      <div id="alm-flow-mount" aria-live="polite"></div>
+</section>
+    <section id="alm-loo" class="panel" aria-labelledby="loo-title" style="grid-column:1/-1">
+      <h2 id="loo-title">Leave-one-out influence</h2>
+      <p id="loo-note">Optional: remove each study and refit the limit estimate. Available for 4–200 valid studies; off until requested. Effects and 95% normal confidence intervals use the entered scale. Change is relative to the full limit estimate. Refused fits have no numerical results.</p>
+      <button id="loo-run" type="button" aria-describedby="loo-note">Leave-one-out on the limit estimate</button>
+      <button id="loo-csv" type="button" disabled>Download leave-one-out CSV</button>
+      <p id="loo-status" role="status" aria-live="polite">Not calculated.</p>
+      <div style="overflow-x:auto">
+        <table aria-label="Leave-one-out limit estimates">
+          <thead><tr><th scope="col">Study omitted</th><th scope="col">Limit without study</th><th scope="col">Change</th><th scope="col">SE</th><th scope="col">RE without study</th><th scope="col">Tau² (DL)</th><th scope="col">Status</th></tr></thead>
+          <tbody id="loo-body"></tbody>
+        </table>
+      </div>
+      <svg id="loo-plot" role="img" aria-label="Leave-one-out limit estimates and 95% confidence intervals; dashed reference line at the full limit estimate. Refusals are listed in the table." hidden></svg>
+    </section>
+    <section id="alm-validate" aria-label="Independent R validation" style="grid-column:1/-1"></section>
+    <section id="alm-plus" class="panel" aria-labelledby="plus-title" style="grid-column:1/-1">
+      <h2 id="plus-title">Bias sensitivity comparisons</h2>
+      <p>Compare assumptions, not proof of publication bias. Trim-and-fill is a sensitivity analysis only. All effects use the entered scale.</p>
+      <label for="plus-alpha">Conditional PET&ndash;PEESE two-sided alpha</label>
+      <input id="plus-alpha" type="number" min="0.001" max="0.999" step="0.01" value="0.10" aria-describedby="plus-alpha-note">
+      <p id="plus-alpha-note">Select PEESE when the PET intercept p-value is below alpha, otherwise PET. Differences below 1e-8 are refused as ties.</p>
+      <details><summary>Optional binary arm counts for Peters</summary>
+        <label for="plus-binary-measure">Binary effect scale</label>
+        <select id="plus-binary-measure"><option value="">Generic effects (Peters unavailable)</option><option value="OR">Log odds ratio</option><option value="RR">Log risk ratio</option></select>
+        <label for="plus-binary-counts">One row per study: events treated, total treated, events control, total control</label>
+        <textarea id="plus-binary-counts" rows="4" aria-describedby="plus-binary-note"></textarea>
+        <p id="plus-binary-note">Counts must match the effect/SE rows in order. All four event/non-event cells must be positive integers; zero cells and mismatched effects are refused. Peters requires at least ten studies.</p>
+      </details>
+      <button id="plus-run" type="button">Calculate sensitivity comparisons</button>
+      <p id="plus-status" role="status" aria-live="polite">Run comparisons using the current input. Independent validation is separate below.</p>
+      <table aria-label="Bias-adjusted comparison estimates"><thead><tr><th>Method</th><th>Estimate</th><th>SE</th><th>95% CI lower</th><th>95% CI upper</th></tr></thead><tbody id="plus-body"></tbody></table>
+      <svg id="plus-forest" viewBox="0 0 700 280" role="img" aria-label="Comparison forest plot; numerical values in the preceding table"></svg>
+      <h3>Combined funnel</h3>
+      <fieldset><legend>Visible layers</legend>
+        <label><input id="plus-limit-toggle" type="checkbox" checked> Limit curve and shrunken effects (blue)</label>
+        <label><input id="plus-fill-toggle" type="checkbox" checked> Trim-and-fill imputed studies (orange)</label>
+        <label><input id="plus-reg-toggle" type="checkbox" checked> PET (green) and PEESE (purple)</label>
+        <label><input id="plus-contour-toggle" type="checkbox"> Two-sided 5% significance contours about zero</label>
+      </fieldset>
+      <svg id="plus-funnel" viewBox="0 0 700 350" role="img" aria-label="Combined sensitivity funnel; controls toggle each layer"></svg>
+      <h3>Small-study tests and fit details</h3>
+      <p>Small-study tests have low power with few studies. Egger requires at least ten studies. Peters requires binary arm counts; effect/SE input alone is insufficient. A small p-value does not identify the cause of asymmetry.</p>
+      <div id="plus-details"></div>
+      <p id="plus-interpretation"></p>
+      <h3>Validate sensitivity comparisons</h3>
+      <div id="alm-plus-validate" aria-label="Independent sensitivity R validation"></div>
+    </section>
+  </main>
+  <footer>
+    R&#252;cker G, Schwarzer G, Carpenter JR, Binder H, Schumacher M. Treatment-effect estimates adjusted for small-study effects via a limit meta-analysis. Biostatistics 2011;12:122&#8211;142. Browser implementation: the full Rücker limit meta-analysis &mdash; DL &tau;&#178;, radial (Galbraith) regression of TE on the &tau;-inflated SE, limit estimate <code>&beta;<sub>r</sub> + &tau;&middot;&alpha;<sub>r</sub></code> (<code>method.adjust='beta0'</code>) with closed-form SE and the small-study/residual Q decomposition. R-parity: matches <code>metasens::limitmeta(metagen(TE=yi, seTE=sei, method.tau='DL'))</code> to 1e-9 on TE.adjust, seTE.adjust, &alpha;<sub>r</sub>, &beta;<sub>r</sub>, Q.small, Q.resid and G&#178; (pinned <code>meta 8.5-0 / metasens 1.5-3</code> oracle; see <code>limit-ma/validate/README.md</code>).
+  </footer>
+  <script src="../hub/shared/analysis-lifecycle.js"></script>
+  <script>
+    // Cycle 7.1: exact qnorm(0.975) for 95% CIs (was 1.96; ~1.3e-5 drift vs metafor).
+    var Z975 = 1.959963984540054;
+
+  (function () {
+    'use strict';
+
+    var _lastResults = null;
+    var _axisState = null;
+    var _validationRun = false;
+
+    function parse(text) {
+      return text.trim().split(/\n/).map(function (l, i) {
+        var parts = l.split(/,/).map(function (s) { return s.trim(); });
+        var te = parseFloat(parts[0]), se = parseFloat(parts[1]);
+        if (!Number.isFinite(te) || !Number.isFinite(se) || se <= 0) return null;
+        return { te: te, se: se, label: parts[2] || ('Study ' + (i + 1)) };
+      }).filter(Boolean);
+    }
+
+    function fmt(x, d) {
+      d = d === undefined ? 3 : d;
+      return Number.isFinite(x) ? x.toFixed(d) : '—';
+    }
+
+    function pool(rows, tau2) {
+      tau2 = tau2 === undefined ? 0 : tau2;
+      var w = rows.map(function (r) { return 1 / (r.se * r.se + tau2); });
+      var sw = w.reduce(function (a, b) { return a + b; }, 0);
+      var mean = rows.reduce(function (acc, r, i) { return acc + w[i] * r.te; }, 0) / sw;
+      var seMean = Math.sqrt(1 / sw);
+      var Q = rows.reduce(function (acc, r, i) { return acc + w[i] * (r.te - mean) * (r.te - mean); }, 0);
+      return { mean: mean, seMean: seMean, sw: sw, Q: Q };
+    }
+
+    function dl(rows) {
+      var w0 = rows.map(function (r) { return 1 / (r.se * r.se); });
+      var sw = w0.reduce(function (a, b) { return a + b; }, 0);
+      var muFE = rows.reduce(function (a, r, i) { return a + w0[i] * r.te; }, 0) / sw;
+      var Q = rows.reduce(function (a, r, i) { return a + w0[i] * (r.te - muFE) * (r.te - muFE); }, 0);
+      var df = rows.length - 1;
+      var sumW2 = w0.reduce(function (a, b) { return a + b * b; }, 0);
+      var tau2 = Math.max(0, (Q - df) / (sw - sumW2 / sw));
+      return { tau2: tau2, muFE: muFE };
+    }
+
+    // Sample mean / variance (R's mean(), var() with n-1 denominator).
+    function _mean(a) {
+      return a.reduce(function (s, v) { return s + v; }, 0) / a.length;
+    }
+    function _varS(a) {
+      var m = _mean(a), n = a.length;
+      return a.reduce(function (s, v) { return s + (v - m) * (v - m); }, 0) / (n - 1);
+    }
+
+    // Faithful port of metasens:::radialregression(TE, seTE, k):
+    // OLS of (TE/seTE) on (1/seTE) in the Galbraith/radial plot.
+    function radialReg(te, se, k) {
+      var x = se.map(function (s) { return 1 / s; });
+      var y = te.map(function (t, i) { return t / se[i]; });
+      var xb = _mean(x), yb = _mean(y);
+      var Sxx = 0, Sxy = 0;
+      for (var i = 0; i < k; i++) {
+        Sxx += (x[i] - xb) * (x[i] - xb);
+        Sxy += (x[i] - xb) * (y[i] - yb);
+      }
+      var slope = Sxy / Sxx;
+      var intercept = yb - slope * xb;
+      var sse = 0, sst = 0;
+      for (var j = 0; j < k; j++) {
+        var fit = intercept + slope * x[j];
+        sse += (y[j] - fit) * (y[j] - fit);
+        sst += (y[j] - yb) * (y[j] - yb);
+      }
+      var sigma = Math.sqrt(sse / (k - 2));
+      var rsq = sst === 0 ? null : 1 - sse / sst;
+      var invSe = se.map(function (s) { return 1 / s; }); // sqrt(1/se^2)
+      var seSlope = 1 / Math.sqrt(_varS(invSe)) / Math.sqrt(k - 1);
+      var seInt = seSlope * _mean(se.map(function (s) { return 1 / (s * s); }));
+      return { intercept: intercept, slope: slope, sigma: sigma,
+               r_squared: rsq, se_slope: seSlope, se_intercept: seInt };
+    }
+
+    // Rücker et al. (2011) limit meta-analysis — faithful port of
+    // metasens::limitmeta(method.adjust='beta0'). All closed-form.
+    function limitMA(rows) {
+      var k = rows.length;
+      var te = rows.map(function (r) { return r.te; });
+      var se = rows.map(function (r) { return r.se; });
+      var d = dl(rows);
+      var tau2 = d.tau2, tau = Math.sqrt(tau2);
+
+      // DL random-effects weights and tau-inflated SE.
+      var wRandom = rows.map(function (r) { return 1 / (r.se * r.se + tau2); });
+      var seTau = wRandom.map(function (w) { return Math.sqrt(1 / w); });
+
+      var regF = radialReg(te, se, k);          // raw-SE radial
+      var regR = radialReg(te, seTau, k);       // tau-inflated radial
+      var alphaR = regR.intercept;
+      var betaR  = regR.slope;
+
+      // Shrunken per-study limit estimates.
+      var teLimit = te.map(function (t, i) {
+        return betaR + Math.sqrt(tau2 / (seTau[i] * seTau[i])) * (t - betaR);
+      });
+      var regL = radialReg(teLimit, se.slice(), k);
+
+      // beta0 adjusted (limit) estimate + closed-form SE.
+      var TEadjust = betaR + tau * alphaR;
+      var sqrtW = wRandom.map(Math.sqrt);
+      var vsw = _varS(sqrtW);
+      var varBeta = 1 / vsw / (k - 1);
+      var varAlpha = _mean(wRandom) / vsw / (k - 1);
+      var covAB = -_mean(sqrtW) / vsw / (k - 1);
+      var seAdjust = Math.sqrt(varBeta + tau2 * varAlpha + 2 * tau * covAB);
+
+      // Q decomposition (small-study vs residual) and G².
+      var Q = pool(rows, 0).Q;            // FE Cochran Q (= metagen $Q)
+      var Qresid = regF.sigma * regF.sigma * (k - 2);
+      var Qsmall = Q - Qresid;
+      var Gsquared = regL.r_squared === null ? null : 1 - regL.r_squared;
+
+      return {
+        limit: TEadjust, seLimit: seAdjust, slope: betaR,
+        alpha_r: alphaR, beta_r: betaR, te_limit: teLimit,
+        Q: Q, Q_small: Qsmall, Q_resid: Qresid, G_squared: Gsquared,
+        tau2: tau2,
+        gReason: regL.r_squared === null ? 'shrunken radial regression total sum of squares is zero' : 'diagnostic arithmetic is non-finite',
+      };
+    }
+
+    function refuse(message) {
+      _lastResults = null;
+      document.getElementById('body').innerHTML = '';
+      document.getElementById('plot').innerHTML = '';
+      document.getElementById('limit-error').textContent = message;
+    }
+
+    run = window.alm.analysisLifecycle(run, function (result) { return !!_lastResults; }, "#src");
+
+    function run() {
+      if (window.AlmLimitLoo) window.AlmLimitLoo.invalidate(_validationRun);
+      document.getElementById('limit-error').textContent = '';
+      document.getElementById('limit-range-note').textContent = '';
+      document.getElementById('limit-diagnostics').textContent = '';
+      var rows = parse(document.getElementById('src').value);
+      if (rows.length < 3) { refuse('At least three valid studies are required.'); return; }
+      if (rows.every(function (r) { return r.se === rows[0].se; })) {
+        refuse('Limit meta-analysis requires variation in study SEs.'); return;
+      }
+      var d = dl(rows);
+      var fe = pool(rows, 0);
+      var re = pool(rows, d.tau2);
+      var lim = limitMA(rows);
+
+      _lastResults = {
+        k:         rows.length,
+        fe_est:    fe.mean,
+        fe_se:     fe.seMean,
+        fe_ci_lo:  fe.mean - Z975 * fe.seMean,
+        fe_ci_hi:  fe.mean + Z975 * fe.seMean,
+        re_est:    re.mean,
+        re_se:     re.seMean,
+        re_ci_lo:  re.mean - Z975 * re.seMean,
+        re_ci_hi:  re.mean + Z975 * re.seMean,
+        tau2_dl:   d.tau2,
+        tau_dl:    Math.sqrt(d.tau2),
+        limit_est: lim.limit,
+        limit_se:  lim.seLimit,
+        limit_ci_lo: lim.limit - Z975 * lim.seLimit,
+        limit_ci_hi: lim.limit + Z975 * lim.seLimit,
+        slope:     lim.slope,
+        // Rücker (2011) limitmeta(beta0) diagnostics — metasens-parity.
+        _schema:   'limit-ma-results-v2',
+        alpha_r:   lim.alpha_r,
+        beta_r:    lim.beta_r,
+        Q:         lim.Q,
+        Q_small:   lim.Q_small,
+        Q_resid:   lim.Q_resid,
+        G_squared: lim.G_squared,
+        te_limit:  lim.te_limit,
+      };
+
+      // Diagnostics can be undefined without invalidating the fitted model.
+      var diagnosticKeys = ['Q', 'Q_small', 'Q_resid', 'G_squared'];
+      var valid = Object.keys(_lastResults).every(function (key) {
+        if (key === '_schema' || diagnosticKeys.indexOf(key) !== -1) return true;
+        var values = Array.isArray(_lastResults[key]) ? _lastResults[key] : [_lastResults[key]];
+        return values.every(Number.isFinite);
+      });
+      if (!valid) { refuse('Limit meta-analysis is numerically undefined for these studies.'); return; }
+
+      var diagnosticNotes = [];
+      diagnosticKeys.forEach(function (key) {
+        if (!Number.isFinite(_lastResults[key])) {
+          _lastResults[key] = null;
+          var reason = key === 'G_squared' ? lim.gReason : 'diagnostic arithmetic is non-finite';
+          diagnosticNotes.push(key + ': undefined (' + reason + ').');
+        }
+      });
+      document.getElementById('limit-diagnostics').textContent = diagnosticNotes.join(' ');
+
+      var body = document.getElementById('body');
+      var __bodyParts = [''];
+      __bodyParts.push('<tr><td><code>Fixed effect</code></td><td>' + fmt(fe.mean) + '</td><td>' + fmt(fe.seMean) + '</td><td>[' + fmt(fe.mean - Z975 * fe.seMean) + ', ' + fmt(fe.mean + Z975 * fe.seMean) + ']</td></tr>');
+      __bodyParts.push('<tr><td><code>Random effects (DL)</code></td><td>' + fmt(re.mean) + '</td><td>' + fmt(re.seMean) + '</td><td>[' + fmt(re.mean - Z975 * re.seMean) + ', ' + fmt(re.mean + Z975 * re.seMean) + ']</td></tr>');
+      __bodyParts.push('<tr style="background:var(--accent-soft); font-weight:600"><td><code>Limit (Rücker)</code></td><td>' + fmt(lim.limit) + '</td><td>' + fmt(lim.seLimit) + '</td><td>[' + fmt(lim.limit - Z975 * lim.seLimit) + ', ' + fmt(lim.limit + Z975 * lim.seLimit) + ']</td></tr>');
+      body.innerHTML = __bodyParts.join('');
+
+      drawFunnel(rows, re, lim);
+    }
+
+    function drawFunnel(rows, re, lim) {
+      var svg = document.getElementById('plot');
+      var W = 600, H = 340, padL = 60, padR = 20, padT = 20, padB = 40;
+      var plotW = W - padL - padR, plotH = H - padT - padB;
+
+      // Apply axis overrides if set
+      var xMin = null, xMax = null, yMin = null, yMax = null;
+      if (_axisState) {
+        if (Array.isArray(_axisState.x)) {
+          if (_axisState.x[0] != null) xMin = _axisState.x[0];
+          if (_axisState.x[1] != null) xMax = _axisState.x[1];
+        }
+        if (Array.isArray(_axisState.y)) {
+          if (_axisState.y[0] != null) yMin = _axisState.y[0];
+          if (_axisState.y[1] != null) yMax = _axisState.y[1];
+        }
+      }
+
+      var __svgParts = [''];
+      var teMin = xMin !== null ? xMin : (Math.min(lim.limit, Math.min.apply(null, rows.map(function (r) { return r.te; }))) - 0.1);
+      var teMax = xMax !== null ? xMax : (Math.max(lim.limit, Math.max.apply(null, rows.map(function (r) { return r.te; }))) + 0.1);
+      var seMax = yMax !== null ? yMax : (Math.max.apply(null, rows.map(function (r) { return r.se; })) * 1.1);
+      var seMin = yMin !== null ? yMin : 0;
+      // Validate the effective ranges after combining automatic and explicit bounds.
+      // Plot errors must not discard the valid fitted table or exported results.
+      if (![teMin, teMax, seMin, seMax].every(Number.isFinite) ||
+          teMin >= teMax || seMin >= seMax) {
+        svg.innerHTML = '';
+        document.getElementById('limit-error').textContent =
+          'Plot range error: effective X and SE bounds must be finite, with min < max. Clear or adjust the axis overrides.';
+        return;
+      }
+      // Only data inside the resolved rectangle reaches pixel mapping.
+      var coordinates = [];
+      function point(x, y) { coordinates.push([x, y]); return x + ',' + y; }
+      function fraction(v, lo, hi) {
+        var span = hi - lo;
+        return Number.isFinite(span) ? (v - lo) / span :
+          (v / 2 - lo / 2) / (hi / 2 - lo / 2);
+      }
+      var X = function (v) { return padL + fraction(v, teMin, teMax) * plotW; };
+      var Y = function (s) { return padT + fraction(s, seMin, seMax) * plotH; };
+      function inside(x, lo, hi) { return x >= lo && x <= hi; }
+      function line(x1, y1, x2, y2, style) {
+        point(x1, y1); point(x2, y2);
+        __svgParts.push('<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" ' + style + '/>');
+      }
+      function label(x, y, text, color) {
+        point(x, y);
+        __svgParts.push('<text x="' + x + '" y="' + y + '" font-size="10" fill="' + color + '">' + text + '</text>');
+      }
+      __svgParts.push('<defs><clipPath id="limit-plot-clip"><rect x="60" y="20" width="520" height="280"/></clipPath></defs><g clip-path="url(#limit-plot-clip)">');
+      point(padL, padT); point(padL + plotW, padT + plotH);
+      line(padL, padT, padL, padT + plotH, 'stroke="currentColor" opacity="0.5"');
+      line(padL, padT + plotH, padL + plotW, padT + plotH, 'stroke="currentColor" opacity="0.5"');
+      if (inside(0, teMin, teMax)) line(X(0), padT, X(0), padT + plotH, 'stroke="currentColor" stroke-dasharray="3 3" opacity="0.3"');
+      if (inside(re.mean, teMin, teMax)) {
+        line(X(re.mean), padT, X(re.mean), padT + plotH, 'stroke="var(--accent)" stroke-width="1.5" opacity="0.75"');
+        label(Math.min(X(re.mean) + 4, padL + plotW), padT + 14, 'RE mean', 'var(--accent)');
+      }
+      if (inside(lim.limit, teMin, teMax)) {
+        line(X(lim.limit), padT, X(lim.limit), padT + plotH, 'stroke="var(--warn)" stroke-width="1.5" opacity="0.85"');
+        label(Math.min(X(lim.limit) + 4, padL + plotW), padT + 28, 'Rücker limit', 'var(--warn)');
+      }
+      // Sample only the visible SE interval. Clip segment endpoints in data
+      // space before X/Y; normalized arithmetic avoids overflowing differences.
+      function interpolate(a, b, t) { return a * (1 - t) + b * t; }
+      function clip(a, b) {
+        if ((a.x < teMin && b.x < teMin) || (a.x > teMax && b.x > teMax)) return null;
+        function endpoint(p, q) {
+          if (inside(p.x, teMin, teMax)) return p;
+          var edge = p.x < teMin ? teMin : teMax;
+          var t = fraction(edge, p.x, q.x);
+          return {x: edge, y: interpolate(p.y, q.y, t)};
+        }
+        return [endpoint(a, b), endpoint(b, a)];
+      }
+      var curve = [], previous = null, last = null;
+      function flush() {
+        if (curve.length) __svgParts.push('<polyline data-regression="true" points="' + curve.join(' ') + '" fill="none" stroke="var(--warn)" stroke-dasharray="4 3" opacity="0.7"/>');
+        curve = []; last = null;
+      }
+      for (var j = 0; j <= 64; j++) {
+        var s = interpolate(seMin, seMax, j / 64);
+        var fitted = lim.beta_r + (lim.alpha_r === 0 ? 0 : lim.alpha_r * Math.hypot(s, Math.sqrt(lim.tau2)));
+        // Overflowing extrapolation is outside any finite bound. A scaled
+        // representation retains its magnitude for data-space intersections.
+        var current = {x: fitted, y: s};
+        if (previous) {
+          var pair;
+          if (Number.isFinite(previous.x) && Number.isFinite(current.x)) {
+            pair = clip(previous, current);
+          } else {
+            var scale = Math.max(Math.abs(previous.y), Math.abs(s), Math.sqrt(lim.tau2), Math.abs(teMin), Math.abs(teMax), Math.abs(lim.beta_r), 1);
+            var scaled = function (v) { return lim.beta_r / scale + (lim.alpha_r === 0 ? 0 : lim.alpha_r * (Math.hypot(v, Math.sqrt(lim.tau2)) / scale)); };
+            var ax = scaled(previous.y), bx = scaled(s), lo = teMin / scale, hi = teMax / scale;
+            pair = null;
+            if (!((ax < lo && bx < lo) || (ax > hi && bx > hi))) {
+              var end = function (x, y, otherX, otherY) {
+                if (inside(x, lo, hi)) return {x: x * scale, y: y};
+                var edge = x < lo ? teMin : teMax;
+                return {x: edge, y: interpolate(y, otherY, fraction(edge / scale, x, otherX))};
+              };
+              pair = [end(ax, previous.y, bx, s), end(bx, s, ax, previous.y)];
+            }
+          }
+          if (!pair) flush();
+          else {
+            var first = point(X(pair[0].x), Y(pair[0].y));
+            var next = point(X(pair[1].x), Y(pair[1].y));
+            if (last !== first) { flush(); curve.push(first); }
+            curve.push(next); last = next;
+          }
+        }
+        previous = current;
+      }
+      flush();
+      var omitted = 0;
+      for (var i = 0; i < rows.length; i++) {
+        if (!inside(rows[i].te, teMin, teMax) || !inside(rows[i].se, seMin, seMax)) { omitted++; continue; }
+        var cx = X(rows[i].te), cy = Y(rows[i].se);
+        point(cx, cy);
+        __svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="4" fill="var(--accent)" opacity="0.8"/>');
+      }
+      label(padL + plotW / 2, padT + plotH - 6, 'Effect', 'currentColor');
+      label(padL + 4, padT + plotH / 2, 'SE', 'currentColor');
+      __svgParts.push('</g>');
+      var markup = __svgParts.join('');
+      // Single pre-install coordinate gate; tolerance covers floating-point
+      // rounding and subpixel strokes, never off-screen source values.
+      var tolerance = 1e-6;
+      if (!coordinates.every(function (p) {
+        return p.every(Number.isFinite) && inside(p[0], padL - tolerance, padL + plotW + tolerance) &&
+          inside(p[1], padT - tolerance, padT + plotH + tolerance);
+      })) {
+        svg.innerHTML = '';
+        document.getElementById('limit-error').textContent =
+          'Plot range error: coordinates cannot be represented inside the plot area. Clear or adjust the axis overrides.';
+        return;
+      }
+      document.getElementById('limit-range-note').textContent = omitted ?
+        omitted + (omitted === 1 ? ' study outside the axis range is' : ' studies outside the axis range are') + ' not shown.' : '';
+      svg.innerHTML = markup;
+    }
+
+    // ---- snapshot/restore for reset-undo ----
+    function snapshot() {
+      return { src: document.getElementById('src').value };
+    }
+
+    function restore(snap) {
+      if (!snap) return;
+      if (snap.src !== undefined) document.getElementById('src').value = snap.src;
+      run();
+    }
+
+    // ---- CSV load ----
+    window.__almLimitLoad = function (rows) {
+      if (!rows || rows.length < 1) return;
+      var lines = [];
+      rows.forEach(function (r) {
+        var te = parseFloat(r.yi !== undefined ? r.yi : (r.effect !== undefined ? r.effect : (r.TE !== undefined ? r.TE : r.te)));
+        var se = parseFloat(r.sei !== undefined ? r.sei : (r.SE !== undefined ? r.SE : (r.seTE !== undefined ? r.seTE : r.se)));
+        if (!Number.isFinite(te) || !Number.isFinite(se) || se <= 0) return;
+        var label = r.study || r.label || r.Study || '';
+        lines.push(te.toString() + ', ' + se.toString() + (label ? ', ' + label : ''));
+      });
+      if (lines.length < 1) return;
+      document.getElementById('src').value = lines.join('\n');
+      run();
+    };
+
+
+    // Validation uses the page engine and preserves pending input separately from rendered results.
+    window.__almLimitValidationSnapshot = function () {
+      return structuredClone({src:document.getElementById('src').value,result:_lastResults,axis:_axisState,
+        dom:['body','plot','limit-error','limit-range-note','limit-diagnostics'].map(id=>[id,document.getElementById(id).innerHTML])});
+    };
+    window.__almLimitValidationRestore = function (s) {
+      document.getElementById('src').value=s.src;_lastResults=structuredClone(s.result);_axisState=structuredClone(s.axis);
+      s.dom.forEach(([id,html])=>{document.getElementById(id).innerHTML=html;});
+      if (window.AlmLimitLoo) window.AlmLimitLoo.restore(_lastResults);
+    };
+    window.__almLimitValidationRun = function (text,automaticAxes) {
+      document.getElementById('src').value=text;if(automaticAxes)_axisState=null;
+      _validationRun = true;
+      try { run(); } finally { _validationRun = false; }
+    };
+
+    // Expose for results-export
+    window._almLastLimit = function () { return _lastResults; };
+
+    // Pure access to the SAME limitMA calculation used by run(), without DOM or state mutation.
+    window.AlmLimitEngine = { parse: parse, fit: function (rows) {
+      if (rows.length < 3) throw Error('At least three valid studies are required.');
+      if (!rows.every(r => Number.isFinite(r.te) && Number.isFinite(r.se) && r.se > 0))
+        throw Error('Finite effects and positive finite SEs are required.');
+      if (rows.every(r => r.se === rows[0].se))
+        throw Error('Limit meta-analysis requires variation in study SEs.');
+      var lim = limitMA(rows), re = pool(rows, lim.tau2);
+      var values = [lim.limit, lim.seLimit, re.mean, lim.tau2].concat(lim.te_limit);
+      if (!values.every(Number.isFinite)) throw Error('Limit meta-analysis is numerically undefined for these studies.');
+      return {limit_est: lim.limit, limit_se: lim.seLimit, re_est: re.mean,
+        tau2: lim.tau2, te_limit: lim.te_limit};
+    }};
+
+    // ---- events ----
+    document.getElementById('btn-run').addEventListener('click', function () {
+      if (window.alm && window.alm.resetUndo && window.alm.resetUndo.snapshot) {
+        window.alm.resetUndo.snapshot();
+      }
+      run();
+    });
+
+
+    if (window.MaStudies && MaStudies.attachButtons) {
+      MaStudies.attachButtons({
+        btnLoad: "#btn-bus-load", btnSave: "#btn-bus-save",
+        textarea: "#src", format: "est-se-label",
+        onAfterLoad: run,
+      });
+    }
+
+    // ---- module init ----
+    window.alm.csvUpload({
+      target: '#alm-csv-mount',
+      columns: [
+        { name: 'yi',    required: true,  type: 'float',  example: '0.55' },
+        { name: 'sei',   required: true,  type: 'float',  example: '0.08' },
+        { name: 'study', required: false, type: 'string', example: 'S01' },
+      ],
+      onParse: function (result) {
+        if (window.alm && window.alm.resetUndo && window.alm.resetUndo.snapshot) {
+          window.alm.resetUndo.snapshot();
+        }
+        window.__almLimitLoad(result.rows);
+      },
+    });
+
+    window.alm.plotExport({
+      target: '#alm-plot-mount',
+      basename: 'limit-ma-funnel',
+      plots: [{ id: 'plot', name: 'Funnel and limit line', getSvg: function () { return document.getElementById('plot'); } }],
+      getReceiptInput: function () {
+        if (!_lastResults) return null;
+        return {
+          studies: [], // bind only the current results below — never the (possibly stale) shared bus
+          method: 'Rucker limit meta-analysis (small-study-adjusted)',
+          label: 'limit-ma-funnel',
+          results: _lastResults,
+        };
+      },
+    });
+
+    window.alm.axisControls({
+      target: '#alm-axis-mount',
+      axes: [
+        { key: 'x', label: 'X axis (effect)', range: [null, null], log: false },
+        { key: 'y', label: 'Y axis (SE)',      range: [null, null], log: false },
+      ],
+      onChange: function (state) {
+        _axisState = state;
+        run();
+      },
+    });
+
+    // This plot implements linear effect/SE axes only.
+    document.querySelectorAll('#alm-axis-mount [data-edge="log"]').forEach(function (input) {
+      input.disabled = true;
+      input.setAttribute('aria-describedby', 'limit-log-note');
+      input.parentNode.title = 'Log axes are not supported for this plot.';
+    });
+
+    window.alm.resultsExport({
+      target: '#alm-export-mount',
+      basename: 'limit-ma-results',
+      getResults: function () { return window._almLastLimit ? window._almLastLimit() : {}; },
+    });
+
+    window.alm.urlState({ version: 1 });
+    var restored = window.alm.urlState.read();
+    if (restored && Object.keys(restored).length > 0) {
+      if (restored.src !== undefined) document.getElementById('src').value = restored.src;
+      run();
+    } else {
+      run();
+    }
+
+    window.alm.resetUndo({
+      target: '#alm-undo-mount',
+      snapshot: snapshot,
+      restore: restore,
+      capacity: 20,
+    });
+
+    window.alm.tooltips({ src: '../hub/shared/glossary.json' });
+
+  })();
+  </script>
+<script src="../hub/shared/a11y-landmarks.js"></script>
+
+<script>
+(function () {
+  function ready(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+  ready(function () {
+    if (!window.MaStudies || typeof MaStudies.attachVerifyInRButton !== "function") return;
+    MaStudies.attachVerifyInRButton({ btn: "#btn-verify-in-r" });
+    if (window.TruthCertUI) {
+      TruthCertUI.attachSettingsButton({ btn: "#btn-truthcert-key" });
+      TruthCertUI.attachReceiptButton({ btn: "#btn-truthcert", basename: "limit-ma", textarea: "#src", format: "est-se-label" });
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  function ready(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+  ready(function () {
+    if (window.AlmFlow && typeof AlmFlow.attachContinueBar === "function") {
+      AlmFlow.attachContinueBar({
+        container: "#alm-flow-mount",
+        suggestions: ["forest-plot", "funnel-plot", "copas", "pet-peese"],
+      });
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  function ready(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+  ready(function () {
+    if (window.AlmHero && typeof AlmHero.attachHero === "function") {
+      AlmHero.attachHero({
+        container: "#alm-hero-mount",
+        textarea: "#src",
+        adapter: "forest",
+      });
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  function ready(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+  ready(function () {
+    if (window.AlmCitation && typeof AlmCitation.attachAuto === "function") {
+      AlmCitation.attachAuto({ container: "#alm-cite-mount", app: "limit-ma" });
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  function ready(fn) {
+    if (document.readyState !== "loading") fn();
+    else document.addEventListener("DOMContentLoaded", fn);
+  }
+  ready(function () {
+    if (window.AlmAutosave && typeof AlmAutosave.install === "function") {
+      AlmAutosave.install({ appKey: 'limit-ma' });
+    }
+  });
+})();
+</script>
+<script src="../shared/alm-validate.js"></script>
+<script src="validate/adapter.js"></script>
+<script src="../shared/ma-core.js"></script>
+<script src="../shared/trimfill.js"></script>
+<script src="../shared/selmodel.js"></script>
+<script src="plus-opt.js"></script>
+<script src="loo-limit.js"></script>
+<script src="plus-selmodel.js"></script>
+<script src="plus.js"></script>
+<script src="plus-ui.js"></script>
+<script src="validate/plus-pins.js"></script>
+<script src="validate/plus-adapter.js"></script>
+</body>
+</html>

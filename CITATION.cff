@@ -1,11 +1,11 @@
 cff-version: 1.2.0
-message: "Please cite this validation archive when using these results."
+message: "Please cite this validation archive when using these results. [ARCHIVE DOI: limitma-reproducible v1.1.0 — pending release]"
 title: "Limit meta-analysis in the browser: validation against the R package metasens"
 type: software
 authors:
   - family-names: Ahmad
     given-names: Mahmood
-version: 1.0.0
+version: 1.1.0
 license: MIT
 references:
   - type: software

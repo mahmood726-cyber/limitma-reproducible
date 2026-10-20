@@ -5,7 +5,7 @@
       "name": "Ahmad, Mahmood"
     }
   ],
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "MIT",
   "upload_type": "software",
   "access_right": "open",
@@ -21,5 +21,5 @@
       "scheme": "doi"
     }
   ],
-  "description": "DL + beta0 validation: 55,524 of 55,525 checks pass; one documented R non-convergence. Source 4a053dd (PR #115); button e431057 (PR #117); allmeta v1.4.0."
+  "description": "DL + beta0 validation: 55,524 of 55,525 checks pass; one documented R non-convergence. Source 4a053dd (PR #115); button e431057 (PR #117); allmeta v1.4.0. Layer 1.1.0 (local, unreleased) adds the leave-one-out limit tier (allmeta 9b232cc: 31,514/31,514 node replay checks; full R regeneration) and the bias-sensitivity tier of allmeta v1.7.0 (16,097 checks: 15,928 numerical replayed in node + 169 archived browser render checks; full R regeneration). [ARCHIVE DOI: limitma-reproducible v1.1.0 — pending release]"
 }

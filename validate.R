@@ -109,4 +109,15 @@ main <- function() {
  cat(sprintf('Runtime: %.3f seconds\n',proc.time()[['elapsed',exact=TRUE]]-started))
  cat('55,524/55,525 pass; 1 documented, 0 unexpected\n');0L
 }
-if(sys.nframe()==0L){status<-tryCatch(main(),error=function(e){cat('Validation failed: ',conditionMessage(e),'\n',sep='',file=stderr());1L});quit(save='no',status=status)}
+# Layer 1.1.0 (v1_1/): LOO and bias-sensitivity tiers. Runs after v1 in a fresh R process (v1 changes meta settings);
+# ARCHIVE_V1_1_ONLY=1 skips the v1 part above. See v1_1/validate_v1_1.R and README.
+rscript <- function() file.path(R.home('bin'),if(.Platform$OS.type=='windows')'Rscript.exe' else 'Rscript')
+v1_1 <- function() {cat('--- layer 1.1.0 (v1_1/validate_v1_1.R) ---\n');system2(rscript(),c('--vanilla','v1_1/validate_v1_1.R'))}
+if(sys.nframe()==0L){
+ status<-if(identical(Sys.getenv('ARCHIVE_V1_1_ONLY'),'1')){
+  cat('ARCHIVE_V1_1_ONLY=1: v1 refit (55,525 checks) skipped; running the v1 input preflight only\n')
+  Sys.unsetenv('ARCHIVE_V1_1_ONLY');system2(rscript(),c('--vanilla','validate.R','--preflight'))
+ } else tryCatch(main(),error=function(e){cat('Validation failed: ',conditionMessage(e),'\n',sep='',file=stderr());1L})
+ if(status==0L&&!('--preflight' %in% commandArgs(TRUE)))status<-v1_1()
+ quit(save='no',status=status)
+}
