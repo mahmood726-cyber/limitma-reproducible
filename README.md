@@ -1,6 +1,6 @@
 # Limit meta-analysis in the browser: validation against the R package metasens
 
-This archive validates the allmeta limit meta-analysis page, source **4a053dd (PR #115)**, with the validation button added in **e431057 (PR #117)**; both commits are in allmeta v1.4.0 (https://doi.org/10.5281/zenodo.23404527). It contains the full primary comparison: **55,524 of 55,525 checks pass; 1 documented R non-convergence**. It is not a complete primary-oracle pass or a release certification.
+This archive validates the allmeta limit meta-analysis page, source **4a053dd (PR #115)**, with the validation button added in **e431057 (PR #117)**; both commits are in allmeta v1.4.0 (https://doi.org/10.5281/zenodo.23404527). The archived page files are re-pinned to allmeta **v1.8.0** (tag `v1.8.0`, commit 1cb3f84, DOI 10.5281/zenodo.23515177), which contains both commits; `RELEASE_EQUIVALENCE.md` records that the page capture repeated on the v1.8.0 bytes is byte-identical to the archived one. It contains the full primary comparison: **55,524 of 55,525 checks pass; 1 documented R non-convergence**. It is not a complete primary-oracle pass or a release certification.
 
 ## Reproduce
 
@@ -35,7 +35,7 @@ The original page passed **44,772/55,525** checks; the corrected page passes **5
 
 ## Layout and provenance
 
-- `app/`: byte-identical page, loaded assets, full webR runtime and dependency archives; `app-sha256.json` inventories bytes.
+- `app/`: the page and every asset it loads at their allmeta v1.8.0 bytes (validated as e431057; re-pinned in 1.1.0, see `RELEASE_EQUIVALENCE.md`), full webR runtime and dependency archives; `app-sha256.json` inventories bytes.
 - `bench/`: original run scripts and documentation, with machine paths replaced by placeholders. These historical scripts expect the original flat run layout; use root `validate.R` for one-command validation.
 - `data/`, `results/`: source inputs and historical R/browser results, including the diagnostic refusal run.
 - `analysis/`, `expected/`: strict comparison, negative safeguards, figures and fixed paper contract.
@@ -50,13 +50,15 @@ The original page passed **44,772/55,525** checks; the corrected page passes **5
 | Refusal | Exact keyed reason from source run | Fresh R must reproduce it; no invented app refusal |
 | Browser validation | Pinned reference and package binaries | Current page outputs, live R, comparisons and verdicts |
 
-MIT licensed. Derived from [allmeta](https://github.com/mahmood726-cyber/allmeta) and allmeta v1.4.0, DOI **10.5281/zenodo.23404527**. No new archive DOI is claimed.
+MIT licensed. Derived from [allmeta](https://github.com/mahmood726-cyber/allmeta) and allmeta v1.4.0, DOI **10.5281/zenodo.23404527**; page files re-pinned to allmeta v1.8.0, DOI **10.5281/zenodo.23515177**. No new archive DOI is claimed.
 
 ## Layer 1.1.0 (local; not released) [ARCHIVE DOI: limitma-reproducible v1.1.0 — pending release]
 
-Version 1.1.0 adds `v1_1/` and leaves every v1 file, count and denominator above unchanged (only `validate.R` gains a
-hook at its end, and the metadata/verifier carry the new version). Two tiers that the paper cites but v1 lacked are
-copied byte-exactly from allmeta commit 9b232cc (branch feat/limitma-leave-one-out-limit); `v1_1/PROVENANCE.json`
+Version 1.1.0 adds `v1_1/` and leaves every v1 count and denominator above unchanged (`validate.R` gains a hook at
+its end, the metadata/verifier carry the new version, and the `app/` page files are re-pinned to their allmeta v1.8.0
+bytes with an unchanged capture). Two tiers that the paper cites but v1 lacked are
+copied byte-exactly from allmeta commit 9b232cc (branch feat/limitma-leave-one-out-limit); all 37 are re-pinned to their
+allmeta v1.8.0 (1cb3f84) bytes, which still give LOO 31,514/31,514 and plus 15,928/15,928 (`RELEASE_EQUIVALENCE.md`). `v1_1/PROVENANCE.json`
 lists commit, path and SHA-256 of all 37 copied files (one README has machine paths replaced by placeholders; the
 check undoes them and requires the git-blob SHA-256).
 

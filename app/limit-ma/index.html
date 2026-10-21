@@ -41,6 +41,7 @@
     th { color: var(--muted); font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
     td code { background: var(--accent-soft); padding: 0.1rem 0.4rem; border-radius: 4px; }
     svg { width: 100%; height: auto; display: block; }
+    #loo-plot[hidden] { display: none; }
     .note { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 0.55rem 0.8rem;
             border-radius: 4px; font-size: 0.82rem; margin-top: 0.75rem; }
     .note strong { color: var(--warn); }
@@ -53,7 +54,7 @@
   <!-- Cycle 2.8 Task 4 shared UX modules — wired per RETROFIT_AUDIT.md:
        wired: csv-upload, chart-download, axis-controls, results-export, url-state, reset-undo, tooltips -->
   <script src="../hub/shared/csv-upload.js"></script>
-  <script src="../hub/shared/chart-download.js"></script>
+  <script src="../hub/shared/plot-export.js"></script>
   <script src="../hub/shared/axis-controls.js"></script>
   <script src="../hub/shared/results-export.js"></script>
   <script src="../hub/shared/url-state.js"></script>
@@ -81,10 +82,10 @@
       <h2>Input</h2>
 
       <!-- csv-upload mount -->
-      <div id="alm-csv-mount"></div>
+
 
       <label style="display:block; font-size:0.85rem; margin-bottom:0.4rem">Studies &#8212; <code>effect, SE, label (optional)</code></label>
-      <textarea id="src" aria-label="Studies — effect, SE, label (one per line)">0.55, 0.08, S01
+      <textarea id="src" aria-describedby="limit-error" aria-label="Studies — effect, SE, label (one per line)">0.55, 0.08, S01
 0.48, 0.10, S02
 0.70, 0.15, S03
 0.60, 0.09, S04
@@ -94,10 +95,12 @@
 0.65, 0.12, S08
 0.45, 0.17, S09
 0.58, 0.10, S10</textarea>
+      <button type="button" id="btn-run" class="primary" style="width:100%;margin-top:0.5rem">Run analysis</button>
+      <div id="analysis-status" role="status" aria-live="polite" hidden>Analysis updated</div>
+      <div id="analysis-stale" hidden>Results out of date — press Run analysis</div>
+      <div id="alm-csv-mount"></div>
         <div id="alm-hero-mount" aria-label="Load a famous benchmark dataset"></div>
         <div id="alm-cite-mount" style="margin-top:0.4rem"></div>
-
-      <button type="button" id="btn-run" class="primary" style="width:100%; margin-top:0.3rem">Fit</button>
       <div style="display:flex;gap:0.4rem;margin-top:0.4rem">
         <button type="button" id="btn-bus-load" style="flex:1" title="Load studies from the shared ma-studies-v1 bus">Load from bus</button>
         <button type="button" id="btn-bus-save" style="flex:1" title="Save current studies to the shared ma-studies-v1 bus">Save to bus</button><button type="button" id="btn-verify-in-r" title="Push current studies to the shared bus and open WebR Validator pre-loaded with metafor — independent R verification in your browser." style="background:#2a6cae;color:#fff;border:1px solid #2a6cae;border-radius:6px;padding:0.45rem 0.85rem;font-weight:600;cursor:pointer;">Verify in R</button><button type="button" id="btn-truthcert" title="Download an HMAC-signed TruthCert receipt of the current studies &mdash; re-verifiable offline with your signing key." style="background:#7c3aed;color:#fff;border:1px solid #7c3aed;border-radius:6px;padding:0.45rem 0.85rem;font-weight:600;cursor:pointer;">TruthCert receipt</button><button type="button" id="btn-truthcert-key" title="Set or generate the TruthCert signing key (shared across all allmeta apps)." style="border:1px solid var(--border);border-radius:6px;padding:0.45rem 0.85rem;cursor:pointer;background:transparent;color:inherit;">&#128273; Key</button>
@@ -123,8 +126,8 @@
 
       <svg id="plot" viewBox="0 0 600 340" role="img" aria-label="Funnel plot with R&#252;cker limit extrapolation line"></svg>
 
-      <!-- chart-download mount -->
-      <div id="alm-chart-mount"></div>
+      <!-- plot-export mount -->
+      <div id="alm-plot-mount"></div>
 
       <div class="note"><strong>Interpretation:</strong> the limit estimate is the value the random-effects model would return if all studies had zero sampling error. A large gap between the standard random-effects estimate and the limit estimate indicates small-study effects (possibly pub bias).</div>
 
@@ -136,14 +139,61 @@
       <div class="actions">
         <div id="alm-export-mount"></div>
       </div>
-    
+
       <div id="alm-flow-mount" aria-live="polite"></div>
 </section>
+    <section id="alm-loo" class="panel" aria-labelledby="loo-title" style="grid-column:1/-1">
+      <h2 id="loo-title">Leave-one-out influence</h2>
+      <p id="loo-note">Optional: remove each study and refit the limit estimate. Available for 4–200 valid studies; off until requested. Effects and 95% normal confidence intervals use the entered scale. Change is relative to the full limit estimate. Refused fits have no numerical results.</p>
+      <button id="loo-run" type="button" aria-describedby="loo-note">Leave-one-out on the limit estimate</button>
+      <button id="loo-csv" type="button" disabled>Download leave-one-out CSV</button>
+      <p id="loo-status" role="status" aria-live="polite">Not calculated.</p>
+      <div style="overflow-x:auto">
+        <table aria-label="Leave-one-out limit estimates">
+          <thead><tr><th scope="col">Study omitted</th><th scope="col">Limit without study</th><th scope="col">Change</th><th scope="col">SE</th><th scope="col">RE without study</th><th scope="col">Tau² (DL)</th><th scope="col">Status</th></tr></thead>
+          <tbody id="loo-body"></tbody>
+        </table>
+      </div>
+      <svg id="loo-plot" role="img" aria-label="Leave-one-out limit estimates and 95% confidence intervals; dashed reference line at the full limit estimate. Refusals are listed in the table." hidden></svg>
+    </section>
     <section id="alm-validate" aria-label="Independent R validation" style="grid-column:1/-1"></section>
+    <section id="alm-plus" class="panel" aria-labelledby="plus-title" style="grid-column:1/-1">
+      <h2 id="plus-title">Bias sensitivity comparisons</h2>
+      <p>Compare assumptions, not proof of publication bias. Trim-and-fill is a sensitivity analysis only. All effects use the entered scale.</p>
+      <label for="plus-alpha">Conditional PET&ndash;PEESE two-sided alpha</label>
+      <input id="plus-alpha" type="number" min="0.001" max="0.999" step="0.01" value="0.10" aria-describedby="plus-alpha-note">
+      <p id="plus-alpha-note">Select PEESE when the PET intercept p-value is below alpha, otherwise PET. Differences below 1e-8 are refused as ties.</p>
+      <details><summary>Optional binary arm counts for Peters</summary>
+        <label for="plus-binary-measure">Binary effect scale</label>
+        <select id="plus-binary-measure"><option value="">Generic effects (Peters unavailable)</option><option value="OR">Log odds ratio</option><option value="RR">Log risk ratio</option></select>
+        <label for="plus-binary-counts">One row per study: events treated, total treated, events control, total control</label>
+        <textarea id="plus-binary-counts" rows="4" aria-describedby="plus-binary-note"></textarea>
+        <p id="plus-binary-note">Counts must match the effect/SE rows in order. All four event/non-event cells must be positive integers; zero cells and mismatched effects are refused. Peters requires at least ten studies.</p>
+      </details>
+      <button id="plus-run" type="button">Calculate sensitivity comparisons</button>
+      <p id="plus-status" role="status" aria-live="polite">Run comparisons using the current input. Independent validation is separate below.</p>
+      <table aria-label="Bias-adjusted comparison estimates"><thead><tr><th>Method</th><th>Estimate</th><th>SE</th><th>95% CI lower</th><th>95% CI upper</th></tr></thead><tbody id="plus-body"></tbody></table>
+      <svg id="plus-forest" viewBox="0 0 700 280" role="img" aria-label="Comparison forest plot; numerical values in the preceding table"></svg>
+      <h3>Combined funnel</h3>
+      <fieldset><legend>Visible layers</legend>
+        <label><input id="plus-limit-toggle" type="checkbox" checked> Limit curve and shrunken effects (blue)</label>
+        <label><input id="plus-fill-toggle" type="checkbox" checked> Trim-and-fill imputed studies (orange)</label>
+        <label><input id="plus-reg-toggle" type="checkbox" checked> PET (green) and PEESE (purple)</label>
+        <label><input id="plus-contour-toggle" type="checkbox"> Two-sided 5% significance contours about zero</label>
+      </fieldset>
+      <svg id="plus-funnel" viewBox="0 0 700 350" role="img" aria-label="Combined sensitivity funnel; controls toggle each layer"></svg>
+      <h3>Small-study tests and fit details</h3>
+      <p>Small-study tests have low power with few studies. Egger requires at least ten studies. Peters requires binary arm counts; effect/SE input alone is insufficient. A small p-value does not identify the cause of asymmetry.</p>
+      <div id="plus-details"></div>
+      <p id="plus-interpretation"></p>
+      <h3>Validate sensitivity comparisons</h3>
+      <div id="alm-plus-validate" aria-label="Independent sensitivity R validation"></div>
+    </section>
   </main>
   <footer>
-    R&#252;cker G, Schwarzer G, Carpenter JR, Binder H, Schumacher M. Treatment-effect estimates adjusted for small-study effects via a limit meta-analysis. Biostatistics 2011;12:122&#8211;142. Browser implementation: the full Rücker limit meta-analysis &mdash; DL &tau;&#178;, radial (Galbraith) regression of TE on the &tau;-inflated SE, limit estimate <code>&beta;<sub>r</sub> + &tau;&middot;&alpha;<sub>r</sub></code> (<code>method.adjust='beta0'</code>) with closed-form SE and the small-study/residual Q decomposition. R-parity: matches <code>metasens::limitmeta(metagen(TE=yi, seTE=sei, method.tau='DL'))</code> to 1e-6 on TE.adjust, seTE.adjust, &alpha;<sub>r</sub>, &beta;<sub>r</sub>, Q.small, Q.resid and G&#178; (<code>tests/copas-parity</code>-style oracle; see <code>hub/shared/tests/limit-ma-parity.spec.mjs</code>).
+    R&#252;cker G, Schwarzer G, Carpenter JR, Binder H, Schumacher M. Treatment-effect estimates adjusted for small-study effects via a limit meta-analysis. Biostatistics 2011;12:122&#8211;142. Browser implementation: the full Rücker limit meta-analysis &mdash; DL &tau;&#178;, radial (Galbraith) regression of TE on the &tau;-inflated SE, limit estimate <code>&beta;<sub>r</sub> + &tau;&middot;&alpha;<sub>r</sub></code> (<code>method.adjust='beta0'</code>) with closed-form SE and the small-study/residual Q decomposition. R-parity: matches <code>metasens::limitmeta(metagen(TE=yi, seTE=sei, method.tau='DL'))</code> to 1e-9 on TE.adjust, seTE.adjust, &alpha;<sub>r</sub>, &beta;<sub>r</sub>, Q.small, Q.resid and G&#178; (pinned <code>meta 8.5-0 / metasens 1.5-3</code> oracle; see <code>limit-ma/validate/README.md</code>).
   </footer>
+  <script src="../hub/shared/analysis-lifecycle.js"></script>
   <script>
     // Cycle 7.1: exact qnorm(0.975) for 95% CIs (was 1.96; ~1.3e-5 drift vs metafor).
     var Z975 = 1.959963984540054;
@@ -153,14 +203,33 @@
 
     var _lastResults = null;
     var _axisState = null;
+    var _validationRun = false;
 
     function parse(text) {
-      return text.trim().split(/\n/).map(function (l, i) {
+      var rows = [], errors = [], first = true;
+      var numeric = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+      // Keep the original default labels while reporting physical input line numbers.
+      var leading = (String(text).match(/^\s*/) || [''])[0].split('\n').length - 1;
+      String(text).split(/\r?\n/).forEach(function (l, i) {
+        if (!l.trim()) return;
         var parts = l.split(/,/).map(function (s) { return s.trim(); });
-        var te = parseFloat(parts[0]), se = parseFloat(parts[1]);
-        if (!Number.isFinite(te) || !Number.isFinite(se) || se <= 0) return null;
-        return { te: te, se: se, label: parts[2] || ('Study ' + (i + 1)) };
-      }).filter(Boolean);
+        var header = first && /^(effect|yi|te)$/i.test(parts[0]) && /^se$/i.test(parts[1]) &&
+          (parts.length === 2 || (parts.length === 3 && /^label$/i.test(parts[2])));
+        first = false;
+        if (header) return;
+        var reason = '';
+        if (parts.length < 2 || parts.length > 3 || /;/.test(parts.slice(0, 2).join(',')))
+          reason = 'expected effect, SE[, label] separated by commas. Use decimal points (0.4), not decimal commas (0,4)';
+        else if (parts.slice(0, 2).some(function (p) { return /^[+-]?(Infinity|NaN)$/i.test(p); })) reason = 'effect and SE must be finite';
+        else if (!numeric.test(parts[0])) reason = 'effect must be a complete number';
+        else if (!numeric.test(parts[1])) reason = 'SE must be a complete number';
+        else if (!Number.isFinite(Number(parts[0])) || !Number.isFinite(Number(parts[1]))) reason = 'effect and SE must be finite';
+        else if (!(Number(parts[1]) > 0)) reason = 'SE must be greater than 0';
+        if (reason) errors.push('Line ' + (i + 1) + ': ' + reason);
+        else rows.push({ te: Number(parts[0]), se: Number(parts[1]), label: parts[2] || ('Study ' + (i + 1 - leading)) });
+      });
+      if (errors.length) throw new Error(errors.join('; ') + '.');
+      return rows;
     }
 
     function fmt(x, d) {
@@ -279,13 +348,21 @@
       document.getElementById('body').innerHTML = '';
       document.getElementById('plot').innerHTML = '';
       document.getElementById('limit-error').textContent = message;
+      document.getElementById('limit-range-note').textContent = '';
+      document.getElementById('limit-diagnostics').textContent = '';
+      if (window.AlmLimitPlusUI) window.AlmLimitPlusUI.clear();
     }
 
+    run = window.alm.analysisLifecycle(run, function (result) { return !!_lastResults; }, "#src");
+
     function run() {
+      if (window.AlmLimitLoo) window.AlmLimitLoo.invalidate(_validationRun);
       document.getElementById('limit-error').textContent = '';
       document.getElementById('limit-range-note').textContent = '';
       document.getElementById('limit-diagnostics').textContent = '';
-      var rows = parse(document.getElementById('src').value);
+      var rows;
+      try { rows = parse(document.getElementById('src').value); }
+      catch (error) { refuse(error.message); return; }
       if (rows.length < 3) { refuse('At least three valid studies are required.'); return; }
       if (rows.every(function (r) { return r.se === rows[0].se; })) {
         refuse('Limit meta-analysis requires variation in study SEs.'); return;
@@ -479,6 +556,58 @@
       label(padL + plotW / 2, padT + plotH - 6, 'Effect', 'currentColor');
       label(padL + 4, padT + plotH / 2, 'SE', 'currentColor');
       __svgParts.push('</g>');
+      // Tick anchors use the existing scales; labels sit in the existing margins,
+      // outside the data clip. Match the plus panel's 5px ticks and 10px type.
+      function ticks(lo, hi) {
+        var unit = Math.pow(10, Math.floor(Math.log10(hi / 5 - lo / 5))) || Number.MIN_VALUE;
+        var best = [], distance = Infinity;
+        [1, 2, 2.5, 5, 10].forEach(function (multiple) {
+          var step = unit * multiple;
+          if (!Number.isFinite(step) || step <= 0) return;
+          var first = Math.ceil(lo / step), last = Math.floor(hi / step);
+          var count = last - first + 1;
+          if (count < 4 || count > 7 || Math.abs(count - 5) >= distance) return;
+          var values = [];
+          for (var i = 0; i < count; i++) {
+            var value = (first + i) * step;
+            if (inside(value, lo, hi) && (!values.length || value > values[values.length - 1].value)) {
+              values.push({value: value, step: step});
+            }
+          }
+          if (values.length >= 4) { best = values; distance = Math.abs(values.length - 5); }
+        });
+        // Near the floating-point limit there may be fewer than four distinct
+        // representable values. Keep finite, distinct anchors without changing bounds.
+        if (!best.length) {
+          for (var i = 0; i <= 5; i++) {
+            var value = interpolate(lo, hi, i / 5);
+            if (inside(value, lo, hi) && (!best.length || value > best[best.length - 1].value)) {
+              best.push({value: value, step: hi / 5 - lo / 5 || Number.MIN_VALUE});
+            }
+          }
+        }
+        return best;
+      }
+      function tickText(value, step) {
+        if (value === 0) return '0';
+        if (Math.abs(value) >= 1e5 || Math.abs(value) < 1e-3) {
+          var digits = Math.min(16, Math.max(0, Math.ceil(Math.log10(Math.abs(value)) - Math.log10(step)) + 1));
+          return Number(value.toExponential(digits)).toString();
+        }
+        return Number(value.toFixed(Math.min(100, Math.max(0, 1 - Math.floor(Math.log10(step)))))).toString();
+      }
+      function axisTicks(axis, lo, hi, scale) {
+        ticks(lo, hi).forEach(function (tick) {
+          var x = axis === 'x' ? scale(tick.value) : padL;
+          var y = axis === 'x' ? padT + plotH : scale(tick.value);
+          var text = tickText(tick.value, tick.step);
+          point(x, y);
+          __svgParts.push('<path data-limit-axis="' + axis + '" d="M ' + x + ' ' + y + ' l ' + (axis === 'x' ? '0 5' : '-5 0') + '" stroke="currentColor" fill="none"><title>' + tick.value + '</title></path>');
+          __svgParts.push('<text data-limit-tick-label="' + axis + '" x="' + x + '" y="' + y + '" dx="' + (axis === 'x' ? 0 : -7) + '" dy="' + (axis === 'x' ? 17 : 4) + '" font-size="10" fill="currentColor" text-anchor="' + (axis === 'x' && x <= W - 30 ? 'middle' : 'end') + '"' + (text.length > 8 ? ' textLength="48" lengthAdjust="spacingAndGlyphs"' : '') + '>' + text + '</text>');
+        });
+      }
+      axisTicks('x', teMin, teMax, X);
+      axisTicks('y', seMin, seMax, Y);
       var markup = __svgParts.join('');
       // Single pre-install coordinate gate; tolerance covers floating-point
       // rounding and subpixel strokes, never off-screen source values.
@@ -533,13 +662,33 @@
     window.__almLimitValidationRestore = function (s) {
       document.getElementById('src').value=s.src;_lastResults=structuredClone(s.result);_axisState=structuredClone(s.axis);
       s.dom.forEach(([id,html])=>{document.getElementById(id).innerHTML=html;});
+      if (window.AlmLimitLoo) window.AlmLimitLoo.restore(_lastResults);
     };
     window.__almLimitValidationRun = function (text,automaticAxes) {
-      document.getElementById('src').value=text;if(automaticAxes)_axisState=null;run();
+      document.getElementById('src').value=text;if(automaticAxes)_axisState=null;
+      _validationRun = true;
+      try { run(); } finally { _validationRun = false; }
     };
+
+    // Sensitivity comparisons share the same strict input contract.
+    window.__almLimitParse = parse;
 
     // Expose for results-export
     window._almLastLimit = function () { return _lastResults; };
+
+    // Pure access to the SAME limitMA calculation used by run(), without DOM or state mutation.
+    window.AlmLimitEngine = { parse: parse, fit: function (rows) {
+      if (rows.length < 3) throw Error('At least three valid studies are required.');
+      if (!rows.every(r => Number.isFinite(r.te) && Number.isFinite(r.se) && r.se > 0))
+        throw Error('Finite effects and positive finite SEs are required.');
+      if (rows.every(r => r.se === rows[0].se))
+        throw Error('Limit meta-analysis requires variation in study SEs.');
+      var lim = limitMA(rows), re = pool(rows, lim.tau2);
+      var values = [lim.limit, lim.seLimit, re.mean, lim.tau2].concat(lim.te_limit);
+      if (!values.every(Number.isFinite)) throw Error('Limit meta-analysis is numerically undefined for these studies.');
+      return {limit_est: lim.limit, limit_se: lim.seLimit, re_est: re.mean,
+        tau2: lim.tau2, te_limit: lim.te_limit};
+    }};
 
     // ---- events ----
     document.getElementById('btn-run').addEventListener('click', function () {
@@ -548,6 +697,7 @@
       }
       run();
     });
+
 
     if (window.MaStudies && MaStudies.attachButtons) {
       MaStudies.attachButtons({
@@ -573,10 +723,10 @@
       },
     });
 
-    window.alm.chartDownload({
-      target: '#alm-chart-mount',
+    window.alm.plotExport({
+      target: '#alm-plot-mount',
       basename: 'limit-ma-funnel',
-      getSvg: function () { return document.getElementById('plot'); },
+      plots: [{ id: 'plot', name: 'Funnel and limit line', getSvg: function () { return document.getElementById('plot'); } }],
       getReceiptInput: function () {
         if (!_lastResults) return null;
         return {
@@ -680,7 +830,8 @@
       AlmHero.attachHero({
         container: "#alm-hero-mount",
         textarea: "#src",
-        adapter: "forest",
+        adapter: "effect-se-label",
+        onAfterLoad: function () { document.getElementById('btn-run').click(); },
       });
     }
   });
@@ -716,5 +867,15 @@
 </script>
 <script src="../shared/alm-validate.js"></script>
 <script src="validate/adapter.js"></script>
+<script src="../shared/ma-core.js"></script>
+<script src="../shared/trimfill.js"></script>
+<script src="../shared/selmodel.js"></script>
+<script src="plus-opt.js"></script>
+<script src="loo-limit.js"></script>
+<script src="plus-selmodel.js"></script>
+<script src="plus.js"></script>
+<script src="plus-ui.js"></script>
+<script src="validate/plus-pins.js"></script>
+<script src="validate/plus-adapter.js"></script>
 </body>
 </html>

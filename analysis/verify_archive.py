@@ -40,7 +40,14 @@ def verify():
  assert z['title']=='Limit meta-analysis in the browser: validation against the R package metasens'
  assert z['creators']==[{'name':'Ahmad, Mahmood'}] and z['license']=='MIT' and z['version']=='1.1.0'
  assert 'family-names: Ahmad' in cff and 'given-names: Mahmood' in cff and '4a053dd' in cff and 'e431057' in cff and '<ALLMETA_COMMIT>' not in cff
- assert {(x['identifier'],x['relation']) for x in z['related_identifiers']}=={('https://github.com/mahmood726-cyber/allmeta','isDerivedFrom'),('10.5281/zenodo.23330389','isDerivedFrom')}
+ assert {(x['identifier'],x['relation']) for x in z['related_identifiers']}=={('https://github.com/mahmood726-cyber/allmeta','isDerivedFrom'),('10.5281/zenodo.23330389','isDerivedFrom'),('10.5281/zenodo.23515177','isDerivedFrom')}
+ for name in ['README.md','CITATION.cff','.zenodo.json','CHANGELOG.md']:
+  text=(ROOT/name).read_text(encoding='utf-8')
+  assert '<ALLMETA_RELEASE' not in text,'Unfilled release token: '+name
+  assert 'v1.8.0' in text and '10.5281/zenodo.23515177' in text,'allmeta v1.8.0 tag/DOI missing: '+name
+ eq=(ROOT/'RELEASE_EQUIVALENCE.md').read_text(encoding='utf-8')
+ assert '1cb3f8409c7af75ed41f7e1811f9c502f900fc79' in eq and 'byte-identical' in eq and '31,514/31,514' in eq and '15,928/15,928' in eq,'Release equivalence record missing'
+ assert next(iter(read(ROOT/'v1_1/PROVENANCE.json')['commits']))=='1cb3f8409c7af75ed41f7e1811f9c502f900fc79','v1_1 provenance not pinned to allmeta v1.8.0'
  table=list(csv.DictReader((ROOT/'outputs/table1_by_quantity.csv').open(encoding='utf-8')))
  check_table(table)
  c=read(ROOT/'data/corpus.json');t2=list(csv.DictReader((ROOT/'outputs/table2_datasets.csv').open(encoding='utf-8')))

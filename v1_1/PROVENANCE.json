@@ -3,92 +3,108 @@
  "layer": "v1.1.0",
  "allmeta_repository": "https://github.com/mahmood726-cyber/allmeta",
  "commits": {
+  "1cb3f8409c7af75ed41f7e1811f9c502f900fc79": "allmeta v1.8.0 (tag v1.8.0, DOI 10.5281/zenodo.23515177): all 37 files are re-pinned to their v1.8.0 blobs; 34 were already byte-identical to 9b232cc, 3 (limit-ma/index.html, shared/ma-core.js, shared/alm-validate.js) changed between 9b232cc and v1.8.0 (see RELEASE_EQUIVALENCE.md)",
   "9b232cce8d89150f89c14d86df0161d3a1353fae": "branch feat/limitma-leave-one-out-limit: leave-one-out limit tier limit-ma/validate/loo/ (pushed); also carries the v1.7.0 bias-sensitivity tier limit-ma/validate/plus/ unchanged except one button-label line in plus-adapter.js",
   "f55a0fddddbbb21a0372f5cae4d919aa3a13a6ed": "branch fix/gosh-limitma-hero-input-validation: one-click example; changes only the hero attach call of limit-ma/index.html (outside the engine script replayed here); no file copied from it"
  },
- "copy_rule": "bytes = git show <commit>:<source_path>, written to v1_1/<path>; sha256 is of those bytes. Files with 'substitutions' had machine paths replaced by placeholders (as v1 bench/ does); 'sha256' is the git blob, 'archived_sha256' the file in this archive. A substitution's original text is stored as 'original_parts' joined by 'sep' (slash or backslash), so that no machine path appears verbatim in this file.",
+ "copy_rule": "bytes = git show <commit>:<source_path> (commit = the v1.8.0 tag commit; historical_commit/historical_sha256 record the original 9b232cc copy), written to v1_1/<path>; sha256 is of those bytes. Files with 'substitutions' had machine paths replaced by placeholders (as v1 bench/ does); 'sha256' is the git blob, 'archived_sha256' the file in this archive. A substitution's original text is stored as 'original_parts' joined by 'sep' (slash or backslash), so that no machine path appears verbatim in this file.",
  "files": [
   {
    "path": "allmeta/limit-ma/index.html",
    "source_path": "limit-ma/index.html",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
-   "bytes": 42418,
-   "sha256": "4092caa54a697cf8b280ed3fbe1a8d897ffc0cfe030a25567bb2045ae2fc1f44"
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "bytes": 47324,
+   "sha256": "bf056148e7adf83818fa2e1f07f554578dae0968886f5c2eddc7816fa39f519d",
+   "historical_sha256": "4092caa54a697cf8b280ed3fbe1a8d897ffc0cfe030a25567bb2045ae2fc1f44"
   },
   {
    "path": "allmeta/limit-ma/plus-opt.js",
    "source_path": "limit-ma/plus-opt.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 3093,
    "sha256": "7bc638d767e5beb7b84140d9f01ded510b5f58d2249855e0d7838223854720f7"
   },
   {
    "path": "allmeta/limit-ma/loo-limit.js",
    "source_path": "limit-ma/loo-limit.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 7629,
    "sha256": "df6a91a2ff86db682d75effbe5c404382517e30f6bacb65e28bba69ae20ac089"
   },
   {
    "path": "allmeta/limit-ma/plus-selmodel.js",
    "source_path": "limit-ma/plus-selmodel.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 13068,
    "sha256": "28b493e7d9b25a401ce0be1d540f41b562c8d3d101074dbf7673cce659b8c60d"
   },
   {
    "path": "allmeta/limit-ma/plus.js",
    "source_path": "limit-ma/plus.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 7807,
    "sha256": "20f34a929183a5e7cdb34262d8c63634f345094bd9fe04aa1b8cf775c51f8bd6"
   },
   {
    "path": "allmeta/shared/ma-core.js",
    "source_path": "shared/ma-core.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
-   "bytes": 28191,
-   "sha256": "fb8b5d7364089a89d8a37f3ddd195b5e21b405e29a24c53e5f1b13516fb9150b"
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "bytes": 28354,
+   "sha256": "ec80f783258b3d49eaa6cabdd19bb794ddeead3db891602f694861188a303058",
+   "historical_sha256": "fb8b5d7364089a89d8a37f3ddd195b5e21b405e29a24c53e5f1b13516fb9150b"
   },
   {
    "path": "allmeta/shared/trimfill.js",
    "source_path": "shared/trimfill.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 5647,
    "sha256": "887cd6ccba1b33addcebdb788cabc7c6eee540128393dedaf4db1e650e2425ac"
   },
   {
    "path": "allmeta/shared/alm-validate.js",
    "source_path": "shared/alm-validate.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
-   "bytes": 17355,
-   "sha256": "24b0f17a3b9273c21eda065cad851ec7ad2d8077de96cee93c3bfe41c51e8e29"
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "bytes": 17456,
+   "sha256": "3edd60412195ed34a0890ffc68fa32401d2f375f8a1055cba68ed069afd61e85",
+   "historical_sha256": "24b0f17a3b9273c21eda065cad851ec7ad2d8077de96cee93c3bfe41c51e8e29"
   },
   {
    "path": "allmeta/limit-ma/validate/corpus/corpus.json",
    "source_path": "limit-ma/validate/corpus/corpus.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 638350,
    "sha256": "a9232d92c3b777c09033b327e8b7df5e332e8b68aadb130d8e164fa4cc437744"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/.gitignore",
    "source_path": "limit-ma/validate/loo/.gitignore",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 132,
    "sha256": "3a0ab5d792eb1a72521be5152afe5403e4c000008d83fe884180eb0541b0914b"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/MANIFEST.json",
    "source_path": "limit-ma/validate/loo/MANIFEST.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 991,
    "sha256": "0539cd622191666ef40ff15878a4db79cfb0717be8c5665e1aace0216c1dea7a"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/README.md",
    "source_path": "limit-ma/validate/loo/README.md",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 5369,
    "sha256": "3aabd98efd5aaa7618e98bce9ac0e53884941712be618b5f659bbf91138e6276",
    "archived_bytes": 5246,
@@ -133,175 +149,200 @@
   {
    "path": "allmeta/limit-ma/validate/loo/compare.py",
    "source_path": "limit-ma/validate/loo/compare.py",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 3713,
    "sha256": "847548b2f9a46367bf290990addbaa9cf9e4cf851c403947fb4f3c3aa223c73c"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/compare_probe.py",
    "source_path": "limit-ma/validate/loo/compare_probe.py",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 1383,
    "sha256": "994f15e95a3ebbccbf51063e0ed5e5b3b88e362f38be675905c1820674ea4946"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/corpus.json",
    "source_path": "limit-ma/validate/loo/corpus.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 372450,
    "sha256": "cc5203e92f261bfded52c1ed96bbd59a96c92a20ceefa5e633ad2d13fdb65710"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/defects.py",
    "source_path": "limit-ma/validate/loo/defects.py",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 1521,
    "sha256": "3df10b0c8e6d4de5333edc1fe3e72e8ceb684f3104a44a5ec074444eb2f05559"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/generate.R",
    "source_path": "limit-ma/validate/loo/generate.R",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 2100,
    "sha256": "dd9ead6fbdabaa8b90512ac0dda9699b9445c20e31a6035e3bfae6427630a14c"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/r_lacks.R",
    "source_path": "limit-ma/validate/loo/r_lacks.R",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 1410,
    "sha256": "28449dfdba0af4177ac0768c0ef4914196ab9e844222763936176952b0a75fc5"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/reference.csv",
    "source_path": "limit-ma/validate/loo/reference.csv",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 600899,
    "sha256": "c39318f0c798a64c1cf0f202140f043bb89a7db3ca458ae98010bd0d3d85334c"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/replay.cjs",
    "source_path": "limit-ma/validate/loo/replay.cjs",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 2941,
    "sha256": "7ad89278775462c3f15fa4873a5da7a96389e70444e7be02107b0c3f962493d8"
   },
   {
    "path": "allmeta/limit-ma/validate/loo/test-feature.cjs",
    "source_path": "limit-ma/validate/loo/test-feature.cjs",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 6940,
    "sha256": "755fb3b5893dbdac36cc9cf6a19cccd6912531349b8797ed1e8453d5c45fc7ae"
   },
   {
    "path": "allmeta/limit-ma/validate/plus/after-statuses.json",
    "source_path": "limit-ma/validate/plus/after-statuses.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 4230,
    "sha256": "23fe63c1640e3d938e6c0f593a88ea47e43984f1a79462293a67bcd31048d8c1"
   },
   {
    "path": "allmeta/limit-ma/validate/plus/baseline-statuses.json",
    "source_path": "limit-ma/validate/plus/baseline-statuses.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 3410,
    "sha256": "7e778fab21ed5228a7ac3b309a1a5157bc1fc1574b0ba189d367a4302b8f80ea"
   },
   {
    "path": "allmeta/limit-ma/validate/plus/corpus.json",
    "source_path": "limit-ma/validate/plus/corpus.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 644751,
    "sha256": "bf68cae8b7f7ae93ed6d5621851858346908c47bc7d1480111bb7485af4f03ca"
   },
   {
    "path": "allmeta/limit-ma/validate/plus/evidence-replay.json",
    "source_path": "limit-ma/validate/plus/evidence-replay.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 207550,
    "sha256": "a0bfa464dca21f61022842f086606af9dcb5471c2a49fa9d6aa79c3e18646e05"
   },
   {
    "path": "allmeta/limit-ma/validate/plus/generator-session.log",
    "source_path": "limit-ma/validate/plus/generator-session.log",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 1104,
    "sha256": "97d7653b94fd315529de8c6d8991a872539bf51462b93dc0da7ad604ad3b727a"
   },
   {
    "path": "allmeta/limit-ma/validate/plus/generator-verification.log",
    "source_path": "limit-ma/validate/plus/generator-verification.log",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 353,
    "sha256": "334ceed8028d0e46e38c1977240142acd3ea0f3231b078ce194acb2b1e383636"
   },
   {
    "path": "allmeta/limit-ma/validate/plus/reference.json",
    "source_path": "limit-ma/validate/plus/reference.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 636047,
    "sha256": "e4caaee58963a1fe4535c1f7ae681aa6d2277018a28dcfdb90ee7eeaec999df7"
   },
   {
    "path": "allmeta/limit-ma/validate/README-plus.md",
    "source_path": "limit-ma/validate/README-plus.md",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 12121,
    "sha256": "44046fb877cff72d3bb863516f1c5007f44801ce5e89e6ddb4118f0ce0d608bc"
   },
   {
    "path": "allmeta/limit-ma/validate/MANIFEST-plus.json",
    "source_path": "limit-ma/validate/MANIFEST-plus.json",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 600,
    "sha256": "4a0888e71b19e8c01e010076412a98443e7161c241e2395e4cadf13c603742e3"
   },
   {
    "path": "allmeta/limit-ma/validate/generate-plus.R",
    "source_path": "limit-ma/validate/generate-plus.R",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 3779,
    "sha256": "e2c35c50edc23fb89a58efb0753dfac67e3dca5e8435cf400dcdcdca6b474570"
   },
   {
    "path": "allmeta/limit-ma/validate/generate-peters.R",
    "source_path": "limit-ma/validate/generate-peters.R",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 1669,
    "sha256": "48145863a3040fca6444c43d13fe6cd437b862f5cc6a30842cc1e4c9bc5b4c40"
   },
   {
    "path": "allmeta/limit-ma/validate/generate-peters-or.R",
    "source_path": "limit-ma/validate/generate-peters-or.R",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 1499,
    "sha256": "0b45eb401766f91f74939be09617393e9ea1077c0df4ba2c027d1772aaaaf5dd"
   },
   {
    "path": "allmeta/limit-ma/validate/pin-plus.py",
    "source_path": "limit-ma/validate/pin-plus.py",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 2535,
    "sha256": "bafe8e29984e9b7733eef63c3cef4ebebbf6deddf057cef0391b6622ab3b0796"
   },
   {
    "path": "allmeta/limit-ma/validate/verify-plus.R",
    "source_path": "limit-ma/validate/verify-plus.R",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 1082,
    "sha256": "3b73b13f8d99723e43bb24de713aa948299f715d5f0b4c4189b631b2800a0c6f"
   },
   {
    "path": "allmeta/limit-ma/validate/plus-adapter.js",
    "source_path": "limit-ma/validate/plus-adapter.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 28035,
    "sha256": "45dfc3190d3997961d004180594243c5a60306f2995148b907744fa127950a8a"
   },
   {
    "path": "allmeta/limit-ma/validate/plus-pins.js",
    "source_path": "limit-ma/validate/plus-pins.js",
-   "commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
+   "commit": "1cb3f8409c7af75ed41f7e1811f9c502f900fc79",
+   "historical_commit": "9b232cce8d89150f89c14d86df0161d3a1353fae",
    "bytes": 512,
    "sha256": "7231af78c28335223a69466ba25d9b042c0d32fb1c0a070806e9fc427fac5b94"
   }
